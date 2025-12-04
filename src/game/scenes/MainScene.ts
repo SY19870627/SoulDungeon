@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { ToolType, TOOLS } from '../../data/tools';
 import { GridSystem } from '../systems/GridSystem';
+import { Hero } from '../objects/Hero';
+import { HEROES, HeroType } from '../../data/heroes';
 
 // Define combo visuals mapping
 const COMBO_VISUALS: Record<string, { icon: string, color: number }> = {
@@ -16,6 +18,9 @@ export class MainScene extends Phaser.Scene {
     private items: Map<string, Phaser.GameObjects.Text>;
     private currentTool: ToolType = 'spring';
     private gridSystem!: GridSystem;
+
+    private heroes: Hero[] = [];
+    private isSimulating = false;
 
     constructor() {
         super({ key: 'MainScene' });
@@ -34,6 +39,11 @@ export class MainScene extends Phaser.Scene {
         // Listen for tool changes from React
         this.game.events.on('tool-changed', (tool: ToolType) => {
             this.currentTool = tool;
+        });
+
+        // Listen for spawn events
+        this.game.events.on('spawn-hero', (type: HeroType) => {
+            this.spawnHero(type);
         });
     }
 
@@ -131,5 +141,97 @@ export class MainScene extends Phaser.Scene {
             duration: 200,
             ease: 'Back.out'
         });
+    }
+
+    private async spawnHero(type: HeroType) {
+        if (this.isSimulating) return; // Simple single-hero simulation for now
+        this.isSimulating = true;
+
+        const def = HEROES[type];
+        const startX = 0;
+        const startY = 0;
+
+        const hero = new Hero(this,
+            startX * this.gridSize + this.gridSize / 2,
+            startY * this.gridSize + this.gridSize / 2,
+            def
+        );
+        hero.gridX = startX;
+        hero.gridY = startY;
+        this.heroes.push(hero);
+
+        await this.runSimulation(hero);
+    }
+
+    private async runSimulation(hero: Hero) {
+        let steps = 0;
+        const maxSteps = 30;
+
+        while (steps < maxSteps && hero.currentHp > 0) {
+            steps++;
+            await new Promise(r => setTimeout(r, 500)); // Wait a bit
+
+            // 1. AI Decision
+            const nextPos = this.gridSystem.getSmartMove(hero.gridX, hero.gridY, hero.definition.id);
+
+            // 2. Move
+            await hero.moveGrid(nextPos.x, nextPos.y, this.gridSize);
+
+            // 3. Check Traps/Environment
+            this.checkCellInteraction(hero);
+
+            // 4. Check Goal
+            if (hero.gridX === this.mapSize - 1 && hero.gridY === this.mapSize - 1) {
+                console.log('Hero escaped!');
+                hero.setAlpha(0.5);
+                break;
+            }
+        }
+
+        if (hero.currentHp <= 0) {
+            console.log('Hero died!');
+            hero.destroy();
+        } else {
+            // Cleanup after run
+            setTimeout(() => {
+                hero.destroy();
+                this.heroes = this.heroes.filter(h => h !== hero);
+            }, 1000);
+        }
+
+        this.isSimulating = false;
+    }
+
+    private checkCellInteraction(hero: Hero) {
+        const cell = this.gridSystem.getCell(hero.gridX, hero.gridY);
+        if (!cell) return;
+
+        let damage = 0;
+
+        // Trap Logic
+        if (cell.type === 'spike') damage = 30;
+        if (cell.type === 'inferno') damage = 60;
+        if (cell.type === 'electric_swamp') damage = 60;
+        if (cell.type === 'toxic_cloud') damage = 50;
+
+        // Spring Logic (Instant Move)
+        if (cell.type === 'spring') {
+            // TODO: Implement spring push logic similar to game.html
+            // For now just log it
+            console.log('Spring triggered!');
+        }
+
+        // Lure Logic (Eat it)
+        if (cell.type === hero.definition.lure) {
+            console.log('Lure eaten!');
+            this.gridSystem.setCell(hero.gridX, hero.gridY, 'empty');
+        }
+
+        if (damage > 0) {
+            const dead = hero.takeDamage(damage);
+            if (dead) {
+                // Hero death handled in loop
+            }
+        }
     }
 }

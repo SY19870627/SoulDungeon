@@ -104,8 +104,6 @@ export class GridSystem {
         console.log(`✨ Synergy Triggered: ${recipe.msg}`);
 
         // Apply result to both cells
-        // Note: In strict TS, we might need to cast string to specific union type if we want to be very safe,
-        // but for now we trust our combo rules match the type definition.
         const resultType = recipe.result as any;
 
         c1.type = resultType;
@@ -115,5 +113,68 @@ export class GridSystem {
         c2.type = resultType;
         c2.rotate = 0;
         this.notifyUpdate(c2);
+    }
+
+    // --- Pathfinding & AI ---
+
+    public getSmartMove(cx: number, cy: number, heroType: string): { x: number, y: number } {
+        // Basic target: End point (bottom-right)
+        let target = { x: this.width - 1, y: this.height - 1 };
+
+        let lureType: string | null = null;
+        let range = 0;
+
+        if (heroType === 'glutton') { lureType = 'meat'; range = 3; }
+        if (heroType === 'thief') { lureType = 'treasure'; range = 4; }
+
+        if (lureType) {
+            const foundLure = this.findNearestLure(cx, cy, lureType, range);
+            if (foundLure) {
+                target = foundLure;
+            }
+        }
+
+        // Simple distance-based movement
+        const moves = [
+            { x: cx + 1, y: cy },
+            { x: cx, y: cy + 1 },
+            { x: cx - 1, y: cy },
+            { x: cx, y: cy - 1 }
+        ];
+
+        // Filter valid moves
+        const validMoves = moves.filter(m =>
+            m.x >= 0 && m.x < this.width && m.y >= 0 && m.y < this.height &&
+            this.grid[m.y][m.x].type !== 'obstacle'
+        );
+
+        if (validMoves.length === 0) return { x: cx, y: cy };
+
+        // Sort by distance to target
+        validMoves.sort((a, b) => {
+            const distA = Math.abs(a.x - target.x) + Math.abs(a.y - target.y);
+            const distB = Math.abs(b.x - target.x) + Math.abs(b.y - target.y);
+            return distA - distB;
+        });
+
+        return validMoves[0];
+    }
+
+    private findNearestLure(cx: number, cy: number, lureType: string, range: number): { x: number, y: number } | null {
+        let bestDist = 999;
+        let bestPos = null;
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                if (this.grid[y][x].type === lureType) {
+                    const d = Math.abs(x - cx) + Math.abs(y - cy);
+                    if (d <= range && d < bestDist) {
+                        bestDist = d;
+                        bestPos = { x, y };
+                    }
+                }
+            }
+        }
+        return bestPos;
     }
 }

@@ -5,9 +5,10 @@ import './Sidebar.css';
 interface SidebarProps {
     currentTool: ToolType;
     onSelectTool: (tool: ToolType) => void;
+    onSpawnHero: (type: string) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentTool, onSelectTool }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentTool, onSelectTool, onSpawnHero }) => {
     // Group tools by category
     const toolsByCategory = TOOLS.reduce((acc, tool) => {
         if (!acc[tool.category]) acc[tool.category] = [];
@@ -17,6 +18,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTool, onSelectTool }) =
 
     return (
         <div className="sidebar">
+            <div className="tool-category">投放冒險者</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <button className="tool-btn" onClick={() => onSpawnHero('knight')} style={{ borderColor: '#2ecc71' }}>
+                    <span className="tool-icon">🛡️</span> 騎士
+                </button>
+                <button className="tool-btn" onClick={() => onSpawnHero('glutton')} style={{ borderColor: '#d35400' }}>
+                    <span className="tool-icon">🐷</span> 貪吃鬼
+                </button>
+                <button className="tool-btn" onClick={() => onSpawnHero('thief')} style={{ borderColor: '#8e44ad' }}>
+                    <span className="tool-icon">🥷</span> 盜賊
+                </button>
+            </div>
+
             {Object.entries(CATEGORIES).map(([catKey, catName]) => {
                 const categoryTools = toolsByCategory[catKey];
                 if (!categoryTools) return null;
