@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>靈魂地城：貪婪與誘惑 (Phase 3 修復版)</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-color: #2a2a2a;
+            --border-color: #444;
+            --accent-color: #b19cd9;
+            --text-color: #eee;
+            --grid-size: 50px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        h1 { color: var(--accent-color); margin: 10px 0; font-size: 22px; letter-spacing: 1px; }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            background: #222;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* 左側：工具列 */
+        .sidebar {
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            max-height: 85vh;
+            padding-right: 5px;
+        }
+
+        .tool-category {
+            font-size: 13px;
+            color: #888;
+            border-bottom: 1px solid #444;
+            padding-bottom: 2px;
+            margin-top: 5px;
+            margin-bottom: 2px;
+            font-weight: bold;
+        }
+
+        .tool-btn {
+            background: var(--panel-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            font-size: 14px;
+        }
+
+        .tool-btn:hover { background: #333; transform: translateX(3px); }
+        .tool-btn.active { 
+            border-color: var(--accent-color); 
+            background: #3a2a4a; 
+            box-shadow: 0 0 8px rgba(177, 156, 217, 0.2);
+        }
+        
+        .tool-icon { font-size: 18px; width: 25px; text-align: center; }
+        .combo-hint { font-size: 10px; color: #888; margin-left: auto; }
+
+        /* 中央：地圖 */
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(7, var(--grid-size));
+            grid-template-rows: repeat(7, var(--grid-size));
+            gap: 3px;
+            background: #333;
+            padding: 3px;
+            border-radius: 4px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .cell {
+            width: var(--grid-size);
+            height: var(--grid-size);
+            background-color: #252525;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cell:hover { background-color: #303030; }
+        
+        /* 特殊標記 */
+        .cell.start { background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; }
+        .cell.start::after { content: "START"; font-size: 8px; position: absolute; bottom: 2px; color: #2ecc71; }
+        .cell.end { background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; }
+        .cell.end::after { content: "GOAL"; font-size: 8px; position: absolute; bottom: 2px; color: #e74c3c; }
+
+        /* 元素樣式 */
+        .cell[data-type="oil"] { background: #3d3d3d; border-bottom: 3px solid #000; }
+        .cell[data-type="fire"] { background: #5a2a2a; border-bottom: 3px solid #e74c3c; }
+        .cell[data-type="water"] { background: #2a3b55; border-bottom: 3px solid #3498db; }
+        .cell[data-type="lightning"] { background: #55552a; border-bottom: 3px solid #f1c40f; }
+        .cell[data-type="poison"] { background: #2a4a2a; border-bottom: 3px solid #2ecc71; }
+        .cell[data-type="fan"] { background: #444; border-bottom: 3px solid #95a5a6; }
+        .cell[data-type="spike"] { background: #444; color: #e74c3c; border: 1px solid #555; }
+        .cell[data-type="spring"] { background: #4a69bd; color: #fff; border-bottom: 3px solid #1e3799; }
+        .cell[data-type="obstacle"] { background: #111; color: #555; cursor: not-allowed; box-shadow: inset 0 0 10px black; }
+        .cell[data-type="meat"] { background: #5c3a3a; border: 1px dashed #e74c3c; }
+        .cell[data-type="treasure"] { background: #5c5c3a; border: 1px dashed #f1c40f; }
+
+        /* 組合技樣式 */
+        .cell.combo-inferno { 
+            background: linear-gradient(45deg, #a93226, #e67e22); 
+            box-shadow: 0 0 10px #e74c3c;
+            animation: pulse-red 1.5s infinite;
+        }
+        .cell.combo-electric-swamp { 
+            background: linear-gradient(45deg, #1f618d, #f1c40f); 
+            box-shadow: 0 0 10px #3498db;
+            animation: pulse-blue 1s infinite;
+        }
+        .cell.combo-toxic-cloud { 
+            background: linear-gradient(45deg, #1e8449, #8e44ad); 
+            box-shadow: 0 0 10px #2ecc71;
+            animation: pulse-green 2s infinite;
+        }
+
+        /* 角色 */
+        .hero {
+            position: absolute;
+            font-size: 24px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 10;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 3px black);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hero.pushed { transition: all 0.1s linear; }
+        
+        /* 血條 */
+        .hp-bar {
+            width: 30px;
+            height: 4px;
+            background: #333;
+            margin-top: -5px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .hp-fill {
+            height: 100%;
+            background: #2ecc71;
+            transition: width 0.2s;
+        }
+
+        /* 動畫 */
+        @keyframes pulse-red { 0% { box-shadow: 0 0 5px #e74c3c; } 50% { box-shadow: 0 0 15px #e74c3c; } 100% { box-shadow: 0 0 5px #e74c3c; } }
+        @keyframes pulse-blue { 0% { box-shadow: 0 0 5px #3498db; } 50% { box-shadow: 0 0 15px #3498db; } 100% { box-shadow: 0 0 5px #3498db; } }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 5px #2ecc71; } 50% { box-shadow: 0 0 15px #2ecc71; } 100% { box-shadow: 0 0 5px #2ecc71; } }
+
+        /* 右側：日誌面板 */
+        .info-panel {
+            width: 250px;
+            background: var(--panel-color);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .log-box {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 13px;
+            font-family: monospace;
+            color: #aaa;
+            height: 250px;
+        }
+        .log-item { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .log-combo { color: #fff; background: rgba(231, 76, 60, 0.2); padding: 4px; border-radius: 3px; margin: 4px 0; border-left: 3px solid #e74c3c; }
+        .log-lure { color: #fff; background: rgba(241, 196, 15, 0.2); padding: 4px; border-radius: 3px; margin: 4px 0; border-left: 3px solid #f1c40f; }
+        
+        .spawn-area {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .btn-spawn {
+            padding: 8px;
+            background: #27ae60;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-spawn:hover { background: #2ecc71; }
+        .btn-spawn small { opacity: 0.8; font-weight: normal; }
+
+        .btn-danger { background: #c0392b; font-size: 12px; padding: 5px; width: 100%; border: none; color: white; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <h1>🏰 Phase 3：貪婪與誘惑 (修復)</h1>
+
+    <div class="main-container">
+        <!-- 工具列 -->
+        <div class="sidebar">
+            <div class="tool-category">物理陷阱</div>
+            <button class="tool-btn active" onclick="selectTool('spring', this)">
+                <span class="tool-icon">⏫</span> 彈簧板
+                <span class="combo-hint">可旋轉</span>
+            </button>
+            <button class="tool-btn" onclick="selectTool('spike', this)">
+                <span class="tool-icon">🗡️</span> 尖刺坑
+                <span class="combo-hint">30傷</span>
+            </button>
+
+            <div class="tool-category">誘餌</div>
+            <button class="tool-btn" onclick="selectTool('meat', this)">
+                <span class="tool-icon">🍖</span> 烤肉
+                <span class="combo-hint">吸貪吃鬼</span>
+            </button>
+            <button class="tool-btn" onclick="selectTool('treasure', this)">
+                <span class="tool-icon">💰</span> 寶箱
+                <span class="combo-hint">吸盜賊</span>
+            </button>
+
+            <div class="tool-category">化學元素</div>
+            <button class="tool-btn" onclick="selectTool('oil', this)">
+                <span class="tool-icon">🛢️</span> 油桶
+                <span class="combo-hint">+火</span>
+            </button>
+            <button class="tool-btn" onclick="selectTool('fire', this)">
+                <span class="tool-icon">🔥</span> 噴火口
+                <span class="combo-hint">+油</span>
+            </button>
+            <button class="tool-btn" onclick="selectTool('water', this)">
+                <span class="tool-icon">💧</span> 水坑
+                <span class="combo-hint">+雷</span>
+            </button>
+            <button class="tool-btn" onclick="selectTool('lightning', this)">
+                <span class="tool-icon">⚡</span> 雷電塔
+                <span class="combo-hint">+水</span>
+            </button>
+            <button class="tool-btn" onclick="selectTool('poison', this)">
+                <span class="tool-icon">☠️</span> 毒氣
+                <span class="combo-hint">+風</span>
+            </button>
+            <button class="tool-btn" onclick="selectTool('fan', this)">
+                <span class="tool-icon">💨</span> 風扇
+                <span class="combo-hint">+毒</span>
+            </button>
+            
+            <div class="tool-category">編輯</div>
+            <button class="tool-btn" onclick="selectTool('eraser', this)">
+                <span class="tool-icon">🧹</span> 清除
+            </button>
+        </div>
+
+        <!-- 遊戲區 -->
+        <div class="game-area">
+            <div id="grid"></div>
+        </div>
+
+        <!-- 資訊與日誌 -->
+        <div class="info-panel">
+            <div style="font-weight: bold; margin-bottom: 5px; color: white;">投放冒險者</div>
+            <div class="spawn-area">
+                <button class="btn-spawn" onclick="spawnHero('knight')">
+                    <span>🛡️ 騎士</span> <small>HP:100</small>
+                </button>
+                <button class="btn-spawn" onclick="spawnHero('glutton')" style="background:#d35400">
+                    <span>🐷 貪吃鬼</span> <small>HP:150</small>
+                </button>
+                <button class="btn-spawn" onclick="spawnHero('thief')" style="background:#8e44ad">
+                    <span>🥷 盜賊</span> <small>HP:60</small>
+                </button>
+            </div>
+
+            <div style="font-weight: bold; margin-top: 15px; color: white;">日誌</div>
+            <div class="log-box" id="log">
+                <div class="log-item">毒氣與風扇已補給。</div>
+                <div class="log-item">請佈置陷阱與誘餌...</div>
+            </div>
+
+            <button class="btn-danger" onclick="generateMap()">生成新地形 (清空)</button>
+        </div>
+    </div>
+
+<script>
+    const gridSize = 7;
+    let currentTool = 'spring';
+    let gridData = [];
+    let isSimulating = false;
+    const startPos = { x: 0, y: 0 };
+    const endPos = { x: gridSize-1, y: gridSize-1 };
+
+    // 元素定義
+    const elements = {
+        empty: { icon: '', name: '空' },
+        spring: { icon: '⏩', name: '彈簧', rotate: 0 },
+        spike: { icon: '🗡️', name: '尖刺' },
+        oil: { icon: '🛢️', name: '油桶' },
+        fire: { icon: '🔥', name: '噴火口' },
+        water: { icon: '💧', name: '水坑' },
+        lightning: { icon: '⚡', name: '雷電塔' },
+        poison: { icon: '☠️', name: '毒氣' },
+        fan: { icon: '💨', name: '風扇' },
+        obstacle: { icon: '🪨', name: '岩石' },
+        meat: { icon: '🍖', name: '烤肉' },
+        treasure: { icon: '💰', name: '寶箱' },
+        // 組合結果
+        inferno: { icon: '🌋', name: '烈焰地獄', class: 'combo-inferno', dmg: 60 },
+        electric_swamp: { icon: '💠', name: '導電水域', class: 'combo-electric-swamp', dmg: 60 },
+        toxic_cloud: { icon: '🤢', name: '擴散毒霧', class: 'combo-toxic-cloud', dmg: 50 }
+    };
+
+    // 角色屬性
+    const heroes = {
+        knight: { icon: '🛡️', name: '騎士', hp: 100, lure: null, range: 0, color: '#2ecc71' },
+        glutton: { icon: '🐷', name: '貪吃鬼', hp: 150, lure: 'meat', range: 3, color: '#d35400' },
+        thief: { icon: '🥷', name: '盜賊', hp: 60, lure: 'treasure', range: 4, color: '#8e44ad' }
+    };
+
+    const combos = [
+        { parts: ['oil', 'fire'], result: 'inferno', msg: '烈焰地獄！' },
+        { parts: ['water', 'lightning'], result: 'electric_swamp', msg: '致命電網！' },
+        { parts: ['poison', 'fan'], result: 'toxic_cloud', msg: '劇毒擴散！' }
+    ];
+
+    function init() {
+        generateMap();
+    }
+
+    function generateMap() {
+        const gridEl = document.getElementById('grid');
+        gridEl.innerHTML = '';
+        gridData = [];
+        log("生成新地形...");
+
+        for (let y = 0; y < gridSize; y++) {
+            let row = [];
+            for (let x = 0; x < gridSize; x++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+
+                if (x === startPos.x && y === startPos.y) cell.classList.add('start');
+                if (x === endPos.x && y === endPos.y) cell.classList.add('end');
+                
+                cell.onmousedown = (e) => handleCellClick(x, y, e);
+                cell.oncontextmenu = (e) => e.preventDefault();
+
+                gridEl.appendChild(cell);
+                
+                let type = 'empty';
+                let dist = Math.abs(x - startPos.x) + Math.abs(y - startPos.y);
+                if (Math.random() < 0.15 && dist > 1 && !(x===endPos.x && y===endPos.y)) {
+                    type = 'obstacle';
+                    cell.dataset.type = 'obstacle';
+                    cell.innerText = elements.obstacle.icon;
+                }
+
+                row.push({ x, y, type: type, el: cell, rotate: 0 });
+            }
+            gridData.push(row);
+        }
+    }
+
+    function handleCellClick(x, y, e) {
+        if (isSimulating) return;
+        const cell = gridData[y][x];
+        
+        if (cell.type === 'obstacle' && currentTool !== 'eraser') return;
+        if ((x === startPos.x && y === startPos.y) || (x === endPos.x && y === endPos.y)) return;
+
+        if (e.button === 2 || currentTool === 'eraser') {
+            resetCell(cell);
+            return;
+        }
+
+        if (cell.type === 'spring' && currentTool === 'spring') {
+            cell.rotate = (cell.rotate + 1) % 4;
+            updateSpringVisual(cell);
+            return;
+        }
+
+        cell.type = currentTool;
+        cell.el.dataset.type = currentTool;
+        cell.el.innerText = elements[currentTool].icon;
+        
+        if (currentTool === 'spring') {
+            cell.rotate = 0;
+            updateSpringVisual(cell);
+        } else {
+            cell.el.style.transform = 'none';
+        }
+        
+        cell.el.animate([{ transform: 'scale(0.8)' }, { transform: 'scale(1)' }], 200);
+        checkSynergy(x, y);
+    }
+
+    function updateSpringVisual(cell) {
+        const rotation = cell.rotate * 90;
+        cell.el.style.transform = `rotate(${rotation}deg)`;
+    }
+
+    function resetCell(cell) {
+        if (cell.type === 'obstacle') return;
+        cell.type = 'empty';
+        cell.el.className = 'cell';
+        cell.el.removeAttribute('data-type');
+        cell.el.innerText = '';
+        cell.el.style.transform = 'none';
+        cell.rotate = 0;
+    }
+
+    function selectTool(tool, btn) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function checkSynergy(x, y) {
+        const currentType = gridData[y][x].type;
+        const neighbors = [{x:x, y:y-1}, {x:x, y:y+1}, {x:x-1, y:y}, {x:x+1, y:y}];
+
+        neighbors.forEach(n => {
+            if (n.x >= 0 && n.x < gridSize && n.y >= 0 && n.y < gridSize) {
+                const nbCell = gridData[n.y][n.x];
+                combos.forEach(recipe => {
+                    if ((recipe.parts[0] === currentType && recipe.parts[1] === nbCell.type) ||
+                        (recipe.parts[1] === currentType && recipe.parts[0] === nbCell.type)) {
+                        triggerCombo(gridData[y][x], nbCell, recipe);
+                    }
+                });
+            }
+        });
+    }
+
+    function triggerCombo(c1, c2, recipe) {
+        const rData = elements[recipe.result];
+        applyCombo(c1, recipe.result, rData);
+        applyCombo(c2, recipe.result, rData);
+        log(`✨ 合成：${recipe.msg}`, 'combo');
+    }
+
+    function applyCombo(cell, type, data) {
+        cell.type = type;
+        cell.el.innerText = data.icon;
+        cell.el.className = `cell ${data.class}`;
+        cell.el.dataset.type = type;
+        cell.el.style.transform = 'none';
+    }
+
+    // --- 核心模擬邏輯 ---
+    async function spawnHero(heroType) {
+        if (isSimulating) return;
+        isSimulating = true;
+        
+        const heroData = heroes[heroType];
+        let currentHp = heroData.hp;
+        
+        log(`--- ${heroData.name} 進場 (HP:${currentHp}) ---`);
+
+        // 創建角色 DOM
+        const heroEl = document.createElement('div');
+        heroEl.className = 'hero';
+        heroEl.innerHTML = `<div>${heroData.icon}</div><div class="hp-bar"><div class="hp-fill"></div></div>`;
+        document.getElementById('grid').appendChild(heroEl);
+
+        let cx = startPos.x;
+        let cy = startPos.y;
+        let steps = 0;
+        let isDead = false;
+
+        updateHeroVisual(heroEl, cx, cy, currentHp, heroData.hp);
+        await sleep(500);
+
+        while (steps < 30 && !isDead) {
+            steps++;
+
+            // 1. AI 決策
+            let nextMove = getSmartMove(cx, cy, heroType);
+            
+            // 2. 彈簧檢查
+            let currentCell = gridData[cy][cx];
+            let pushed = false;
+
+            if (currentCell.type === 'spring') {
+                log("彈簧觸發！", 'combo');
+                let dir = currentCell.rotate; 
+                let dx = 0, dy = 0;
+                if (dir === 0) dx = 2; 
+                if (dir === 1) dy = 2;
+                if (dir === 2) dx = -2;
+                if (dir === 3) dy = -2;
+                
+                let tx = cx + dx;
+                let ty = cy + dy;
+                
+                tx = Math.max(0, Math.min(gridSize-1, tx));
+                ty = Math.max(0, Math.min(gridSize-1, ty));
+                
+                // 撞牆檢查
+                if (gridData[ty][tx].type === 'obstacle') {
+                   tx = cx + (dx!==0 ? Math.sign(dx) : 0);
+                   ty = cy + (dy!==0 ? Math.sign(dy) : 0);
+                   if (gridData[ty][tx].type === 'obstacle') { tx = cx; ty = cy; } 
+                   log("撞到牆壁！");
+                }
+
+                nextMove = { x: tx, y: ty };
+                pushed = true;
+                heroEl.classList.add('pushed');
+            }
+
+            // 3. 移動
+            cx = nextMove.x;
+            cy = nextMove.y;
+            updateHeroVisual(heroEl, cx, cy, currentHp, heroData.hp);
+            
+            if (pushed) await sleep(200);
+            else await sleep(500);
+            heroEl.classList.remove('pushed');
+
+            // 4. 抵達終點檢查
+            if (cx === endPos.x && cy === endPos.y) {
+                log(`${heroData.name} 成功逃脫！(你失敗了)`, 'normal');
+                heroEl.style.opacity = 0.5;
+                break;
+            }
+
+            // 5. 陷阱傷害結算
+            let landCell = gridData[cy][cx];
+            let damage = 0;
+            let msg = "";
+            let isCombo = false;
+
+            if (landCell.type === 'spike') {
+                damage = 30;
+                msg = "踩到尖刺";
+            } 
+            else if (['inferno', 'electric_swamp', 'toxic_cloud'].includes(landCell.type)) {
+                damage = elements[landCell.type].dmg;
+                msg = "落入化學地獄";
+                isCombo = true;
+            }
+
+            // 誘餌被吃掉
+            if (landCell.type === heroData.lure) {
+                log(`${heroData.name} 吃掉了 ${elements[landCell.type].name}！滿足！`, 'log-lure');
+                landCell.type = 'empty';
+                landCell.el.innerText = '';
+                landCell.el.dataset.type = '';
+                landCell.el.className = 'cell';
+            }
+
+            if (damage > 0) {
+                if (pushed) { damage *= 2; msg += " (彈射爆擊!)"; isCombo = true; }
+                
+                currentHp -= damage;
+                updateHeroVisual(heroEl, cx, cy, currentHp, heroData.hp);
+                
+                log(`${msg} -${damage} HP`, isCombo ? 'combo' : 'normal');
+
+                heroEl.firstElementChild.style.transform = 'scale(1.2)'; // 受傷特效
+                setTimeout(()=>heroEl.firstElementChild.style.transform = 'scale(1)', 200);
+
+                if (currentHp <= 0) {
+                    log(`${heroData.name} 被消滅了！獲得靈魂！`, 'combo');
+                    heroEl.innerHTML = "💀";
+                    isDead = true;
+                }
+            }
+        }
+
+        if (!isDead && !(cx === endPos.x && cy === endPos.y)) {
+            log("迷路超時。");
+            heroEl.style.opacity = 0.5;
+        }
+
+        await sleep(1000);
+        heroEl.remove();
+        isSimulating = false;
+    }
+
+    // AI 尋路邏輯
+    function getSmartMove(cx, cy, heroType) {
+        const heroData = heroes[heroType];
+        let target = { x: endPos.x, y: endPos.y };
+        let lureFound = false;
+
+        // 掃描周圍尋找誘餌
+        if (heroData.lure) {
+            let bestDist = 999;
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (gridData[y][x].type === heroData.lure) {
+                        let d = Math.abs(x - cx) + Math.abs(y - cy);
+                        if (d <= heroData.range && d < bestDist) {
+                            target = { x: x, y: y };
+                            bestDist = d;
+                            lureFound = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (lureFound) {
+            log(`${heroData.name} 被誘惑了！改變目標。`, 'log-lure');
+        }
+
+        // 朝目標移動 (簡單距離判定)
+        let moves = [{x:cx+1, y:cy}, {x:cx, y:cy+1}, {x:cx-1, y:cy}, {x:cx, y:cy-1}];
+        
+        // 過濾合法移動
+        let validMoves = moves.filter(m => 
+            m.x >= 0 && m.x < gridSize && m.y >= 0 && m.y < gridSize && 
+            gridData[m.y][m.x].type !== 'obstacle'
+        );
+
+        if (validMoves.length === 0) return {x:cx, y:cy};
+
+        // 選擇離目標最近的格子
+        validMoves.sort((a, b) => {
+            let distA = Math.abs(a.x - target.x) + Math.abs(a.y - target.y);
+            let distB = Math.abs(b.x - target.x) + Math.abs(b.y - target.y);
+            return distA - distB;
+        });
+
+        // 隨機性 (稍微)
+        return validMoves[0];
+    }
+
+    function updateHeroVisual(el, x, y, hp, maxHp) {
+        const cellSize = 50; 
+        const gap = 3;
+        // 簡單置中修正
+        el.style.left = (3 + x * (cellSize + gap)) + 'px';
+        el.style.top = (3 + y * (cellSize + gap)) + 'px';
+        el.style.width = cellSize + 'px';
+        el.style.height = cellSize + 'px';
+        el.style.display = 'flex';
+        el.style.justifyContent = 'center';
+        el.style.alignItems = 'center';
+
+        // 更新血條
+        const hpPct = Math.max(0, (hp / maxHp) * 100);
+        const bar = el.querySelector('.hp-fill');
+        if (bar) {
+            bar.style.width = hpPct + '%';
+            if (hpPct < 30) bar.style.background = '#e74c3c';
+            else if (hpPct < 60) bar.style.background = '#f1c40f';
+        }
+    }
+
+    function log(msg, type = 'normal') {
+        const logEl = document.getElementById('log');
+        const entry = document.createElement('div');
+        if (type === 'combo') entry.className = 'log-combo';
+        else if (type === 'log-lure') entry.className = 'log-lure';
+        else entry.className = 'log-item';
+        entry.innerText = msg;
+        logEl.prepend(entry);
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    init();
+
+</script>
+</body>
+</html>
