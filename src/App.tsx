@@ -1,9 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Phaser from 'phaser'
+import { Sidebar } from './components/Sidebar'
+import { ToolType } from './data/tools'
+import { MainScene } from './game/scenes/MainScene'
 
 function App() {
     const gameRef = useRef<HTMLDivElement>(null)
+    const gameInstanceRef = useRef<Phaser.Game | null>(null)
+    const [currentTool, setCurrentTool] = useState<ToolType>('spring')
 
+    // Initialize Game
     useEffect(() => {
         if (!gameRef.current) return
 
@@ -12,6 +18,7 @@ function App() {
             width: 800,
             height: 600,
             parent: gameRef.current,
+            backgroundColor: '#1a1a1a',
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -19,44 +26,37 @@ function App() {
                     debug: true
                 }
             },
-            scene: {
-                preload: preload,
-                create: create,
-                update: update
-            }
+            scene: [MainScene]
         }
 
         const game = new Phaser.Game(config)
-
-        function preload(this: Phaser.Scene) {
-            // this.load.image('logo', 'path/to/logo.png');
-        }
-
-        function create(this: Phaser.Scene) {
-            const text = this.add.text(400, 300, 'Soul Dungeon\nPhaser + React + Electron', {
-                fontSize: '32px',
-                color: '#ffffff',
-                align: 'center'
-            });
-            text.setOrigin(0.5);
-        }
-
-        function update(this: Phaser.Scene) {
-            // Game loop
-        }
+        gameInstanceRef.current = game;
 
         return () => {
             game.destroy(true)
+            gameInstanceRef.current = null;
         }
     }, [])
 
+    // Sync Tool State to Phaser
+    useEffect(() => {
+        if (gameInstanceRef.current) {
+            gameInstanceRef.current.events.emit('tool-changed', currentTool);
+        }
+    }, [currentTool])
+
     return (
-        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '10px', background: '#333', color: 'white' }}>
-                <h1>Soul Dungeon Manager</h1>
-                <button onClick={() => alert('React Button Clicked!')}>React UI Button</button>
+        <div style={{ width: '100%', height: '100vh', display: 'flex', overflow: 'hidden' }}>
+            <Sidebar currentTool={currentTool} onSelectTool={setCurrentTool} />
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '10px', background: '#222', color: 'white', borderBottom: '1px solid #444' }}>
+                    <h2 style={{ margin: 0, fontSize: '18px', color: '#b19cd9' }}>
+                        目前選擇工具: {currentTool}
+                    </h2>
+                </div>
+                <div ref={gameRef} style={{ flex: 1, background: '#000', overflow: 'hidden' }} />
             </div>
-            <div ref={gameRef} style={{ flex: 1, background: '#000' }} />
         </div>
     )
 }

@@ -1,0 +1,64 @@
+.sidebar {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    max-height: 100%;
+    padding: 10px;
+    background: #2a2a2a;
+    border-right: 1px solid #444;
+}
+
+.tool-category {
+    font-size: 13px;
+    color: #888;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.tool-btn {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #eee;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    font-size: 14px;
+    width: 100%;
+}
+
+.tool-btn:hover {
+    background: #333;
+    transform: translateX(3px);
+}
+
+.tool-btn.active {
+    border-color: #b19cd9;
+    background: #3a2a4a;
+    box-shadow: 0 0 8px rgba(177, 156, 217, 0.2);
+}
+
+.tool-icon {
+    font-size: 18px;
+    width: 25px;
+    text-align: center;
+}
+
+.tool-name {
+    flex: 1;
+}
+
+.combo-hint {
+    font-size: 10px;
+    color: #888;
+}
