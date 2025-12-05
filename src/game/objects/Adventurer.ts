@@ -16,6 +16,10 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public path: { x: number, y: number }[];
     public progress: number = 0;
 
+    // Pause Logic
+    private pauseTimer: number = 0;
+    private readonly PAUSE_DURATION: number = 0.5; // 0.5 seconds pause
+
     // Visuals
     private bodySprite: Phaser.GameObjects.Arc;
     private healthBarBg: Phaser.GameObjects.Rectangle;
@@ -64,21 +68,38 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.healthBarFg.scaleX = percent;
     }
 
-
-
-    public move(dt: number, gridSystem: any): boolean {
+    public move(dt: number, gridSystem: any): { reachedEnd: boolean, enteredNewTile: boolean } {
         // Returns true if reached end
-        if (this.path.length <= 1) return true;
+        if (this.path.length <= 1) return { reachedEnd: true, enteredNewTile: false };
+
+        // Handle Pause
+        if (this.pauseTimer > 0) {
+            this.pauseTimer -= dt;
+            if (this.pauseTimer <= 0) {
+                // Pause finished, proceed to next tile
+                this.progress -= 1;
+                this.path.shift();
+            } else {
+                // Still paused
+                return { reachedEnd: false, enteredNewTile: false };
+            }
+        }
 
         this.progress += this.speed * dt;
 
         if (this.progress >= 1) {
-            this.progress -= 1;
-            this.path.shift();
+            // Reached target tile, start pause
+            this.pauseTimer = this.PAUSE_DURATION;
 
-            // Check for traps on new tile (This logic might need to stay in WaveManager or be passed in)
-            // For now, we just update position. 
-            // We can return "entered new tile" status or similar if needed.
+            // Snap to exact target position
+            const nextTile = this.path[1];
+            const nextWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
+            this.x = nextWorld.x;
+            this.y = nextWorld.y;
+
+            // We just arrived at the center of the new tile. Trigger trap now!
+            console.log(`Adventurer ${this.id} entered new tile: ${nextTile.x}, ${nextTile.y}`);
+            return { reachedEnd: false, enteredNewTile: true };
         }
 
         if (this.path.length > 1) {
@@ -92,6 +113,15 @@ export class Adventurer extends Phaser.GameObjects.Container {
             this.y = Phaser.Math.Linear(currentWorld.y, nextWorld.y, this.progress);
         }
 
-        return false;
+        return { reachedEnd: false, enteredNewTile: false };
+    }
+
+    public teleport(x: number, y: number, newPath: { x: number, y: number }[]) {
+        this.x = x;
+        this.y = y;
+        this.path = newPath;
+        this.progress = 0;
+        this.pauseTimer = 0; // Critical: Reset pause timer
+        console.log(`Adventurer ${this.id} teleported to ${x}, ${y}. Pause timer reset.`);
     }
 }

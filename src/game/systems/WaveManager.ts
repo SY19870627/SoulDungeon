@@ -19,7 +19,7 @@ export class WaveManager {
     private endPos = { x: 9, y: 9 };
 
     private waveConfig = {
-        count: 5,
+        count: 1,
         interval: 2000, // ms
         spawned: 0
     };
@@ -41,15 +41,18 @@ export class WaveManager {
         }
 
         this.waveConfig.spawned = 0;
-        this.spawnTimer = this.scene.time.addEvent({
-            delay: this.waveConfig.interval,
-            callback: this.spawnAdventurer,
-            callbackScope: this,
-            repeat: this.waveConfig.count - 1
-        });
 
         // Spawn first one immediately
         this.spawnAdventurer();
+
+        if (this.waveConfig.count > 1) {
+            this.spawnTimer = this.scene.time.addEvent({
+                delay: this.waveConfig.interval,
+                callback: this.spawnAdventurer,
+                callbackScope: this,
+                repeat: this.waveConfig.count - 2 // repeat is "how many times AFTER the first one"
+            });
+        }
     }
 
     private spawnAdventurer() {
@@ -86,7 +89,7 @@ export class WaveManager {
             }
 
             // Move
-            const reachedEnd = adv.move(dt, this.gridSystem);
+            const { reachedEnd, enteredNewTile } = adv.move(dt, this.gridSystem);
 
             if (reachedEnd) {
                 this.removeAdventurer(i);
@@ -94,12 +97,15 @@ export class WaveManager {
                 continue;
             }
 
-            // Check traps
-            const gridPos = this.gridSystem.worldToGrid(adv.x, adv.y);
-            if (gridPos) {
-                const cell = this.gridSystem.getCell(gridPos.x, gridPos.y);
-                if (cell && cell.trap) {
-                    this.trapSystem.trigger(adv, cell.trap, dt, this.gridSystem, this.pathfinding, this.endPos);
+            // Check traps only if entered new tile
+            if (enteredNewTile) {
+                const gridPos = this.gridSystem.worldToGrid(adv.x, adv.y);
+                if (gridPos) {
+                    const cell = this.gridSystem.getCell(gridPos.x, gridPos.y);
+                    if (cell && cell.trap) {
+                        console.log(`WaveManager triggering trap at ${gridPos.x}, ${gridPos.y} for ${adv.id}`);
+                        this.trapSystem.trigger(adv, cell.trap, dt, this.gridSystem, this.pathfinding, this.endPos);
+                    }
                 }
             }
         }

@@ -8,7 +8,9 @@ export type TrapEffect = (
     dt: number,
     gridSystem: GridSystem,
     pathfinding: Pathfinding,
-    endPos: { x: number, y: number }
+    endPos: { x: number, y: number },
+    trapSystem: TrapSystem,
+    depth: number
 ) => void;
 
 export class TrapSystem {
@@ -20,11 +22,12 @@ export class TrapSystem {
 
     private registerDefaultEffects() {
         this.effects['spike'] = (adv, trap, dt) => {
-            // Continuous damage: 50 per second
-            adv.takeDamage(50 * dt);
+            // Flat damage on entry
+            console.log(`Spike trap dealing 30 damage to ${adv.id}`);
+            adv.takeDamage(30);
         };
 
-        this.effects['spring'] = (adv, trap, dt, gridSystem, pathfinding, endPos) => {
+        this.effects['spring'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
             const direction = trap.direction || 'up';
             let dx = 0;
             let dy = 0;
@@ -47,18 +50,24 @@ export class TrapSystem {
 
                 // Teleport
                 const targetWorld = gridSystem.gridToWorld(targetX, targetY);
-                adv.x = targetWorld.x;
-                adv.y = targetWorld.y;
-                adv.progress = 0; // Reset progress
 
                 // Recalculate Path
                 const newPath = pathfinding.findPath({ x: targetX, y: targetY }, endPos);
+
                 if (newPath.length > 0) {
-                    adv.path = newPath;
+                    adv.teleport(targetWorld.x, targetWorld.y, newPath);
                 } else {
                     console.log('No path from jump target!');
-                    adv.path = []; // Stop moving
+                    adv.teleport(targetWorld.x, targetWorld.y, []); // Stop moving
                 }
+
+                // Check for trap at landing position (Recursive Trigger)
+                const landingCell = gridSystem.getCell(targetX, targetY);
+                if (landingCell && landingCell.trap) {
+                    console.log('Landed on another trap!');
+                    trapSystem.trigger(adv, landingCell.trap, dt, gridSystem, pathfinding, endPos, depth + 1);
+                }
+
             } else {
                 // Hit a wall or out of bounds
                 console.log('Spring blocked!');
@@ -73,11 +82,17 @@ export class TrapSystem {
         dt: number,
         gridSystem: GridSystem,
         pathfinding: Pathfinding,
-        endPos: { x: number, y: number }
+        endPos: { x: number, y: number },
+        depth: number = 0
     ) {
+        if (depth > 5) {
+            console.warn('Trap recursion depth exceeded!');
+            return;
+        }
+
         const effect = this.effects[trap.type];
         if (effect) {
-            effect(adv, trap, dt, gridSystem, pathfinding, endPos);
+            effect(adv, trap, dt, gridSystem, pathfinding, endPos, this, depth);
         }
     }
 }

@@ -36,9 +36,11 @@ function createWindow() {
 
     if (VITE_DEV_SERVER_URL) {
         win.loadURL(VITE_DEV_SERVER_URL)
+        win.webContents.openDevTools()
     } else if (!app.isPackaged) {
         // Fallback for dev mode if VITE_DEV_SERVER_URL is not set
         win.loadURL('http://localhost:5173')
+        win.webContents.openDevTools()
     } else {
         // win.loadFile('dist/index.html')
         win.loadFile(path.join(DIST, 'index.html'))
