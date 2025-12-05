@@ -25,6 +25,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private bodySprite: Phaser.GameObjects.Triangle;
     private healthBarBg: Phaser.GameObjects.Rectangle;
     private healthBarFg: Phaser.GameObjects.Rectangle;
+    private emoteText: Phaser.GameObjects.Text;
 
     constructor(scene: Phaser.Scene, x: number, y: number, config: AdventurerConfig) {
         super(scene, x, y);
@@ -58,6 +59,49 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
         this.add(this.healthBarBg);
         this.add(this.healthBarFg);
+
+        // Create Emote Text
+        this.emoteText = scene.add.text(0, -45, '', { fontSize: '24px' });
+        this.emoteText.setOrigin(0.5);
+        this.emoteText.setVisible(false);
+        this.add(this.emoteText);
+    }
+
+    public showEmote(emoji: string, duration: number = 1000) {
+        if (!this.scene) return;
+
+        // Stop any existing animations on the emote text
+        this.scene.tweens.killTweensOf(this.emoteText);
+
+        this.emoteText.setText(emoji);
+        this.emoteText.setVisible(true);
+        this.emoteText.setScale(0);
+        this.emoteText.setAlpha(1);
+        this.emoteText.y = -45; // Reset position in case it was floating up
+
+        // Pop in
+        this.scene.tweens.add({
+            targets: this.emoteText,
+            scale: 1.2,
+            duration: 200,
+            ease: 'Back.out',
+            onComplete: () => {
+                if (!this.scene) return;
+                // Fade out after delay
+                this.scene.tweens.add({
+                    targets: this.emoteText,
+                    alpha: 0,
+                    y: this.emoteText.y - 20, // Float up
+                    duration: 500,
+                    delay: duration - 700,
+                    onComplete: () => {
+                        if (!this.scene) return;
+                        this.emoteText.setVisible(false);
+                        this.emoteText.y = -45; // Reset position
+                    }
+                });
+            }
+        });
     }
 
     public takeDamage(amount: number) {

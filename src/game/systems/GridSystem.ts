@@ -10,6 +10,8 @@ export interface TrapConfig {
     element?: string; // 'fire', 'water', 'oil', 'lightning'
     cooldown?: number;
     pushDistance?: number;
+    emoteSuccess?: string;
+    emoteFail?: string;
 }
 
 export interface Trap {

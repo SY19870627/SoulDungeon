@@ -8,6 +8,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         color: 0xff0000,
         cost: 20,
         damage: 30,
+        emoteSuccess: '😖',
         cooldown: 0
     },
     'spring': {
@@ -17,6 +18,8 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         color: 0x00ff00,
         cost: 30,
         pushDistance: 2,
+        emoteSuccess: '😱',
+        emoteFail: '🤕',
         cooldown: 0
     }
 };

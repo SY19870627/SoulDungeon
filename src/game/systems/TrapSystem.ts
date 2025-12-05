@@ -26,6 +26,9 @@ export class TrapSystem {
             const damage = trap.config.damage || 0;
             console.log(`${trap.config.name} trap dealing ${damage} damage to ${adv.id}`);
             adv.takeDamage(damage);
+            if (trap.config.emoteSuccess) {
+                adv.showEmote(trap.config.emoteSuccess);
+            }
         };
 
         this.effects['physics'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
@@ -49,6 +52,9 @@ export class TrapSystem {
             if (gridSystem.isWalkable(targetX, targetY)) {
                 // Valid jump
                 console.log(`${trap.config.name}! Jumping to ${targetX}, ${targetY}`);
+                if (trap.config.emoteSuccess) {
+                    adv.showEmote(trap.config.emoteSuccess);
+                }
 
                 // Teleport
                 const targetWorld = gridSystem.gridToWorld(targetX, targetY);
@@ -76,6 +82,9 @@ export class TrapSystem {
             } else {
                 // Hit a wall or out of bounds
                 console.log('Spring blocked!');
+                if (trap.config.emoteFail) {
+                    adv.showEmote(trap.config.emoteFail);
+                }
                 adv.takeDamage(20); // Collision damage could also be config based later
             }
         };
