@@ -1,9 +1,25 @@
-export interface Trap {
-    type: string;
+export type TrapType = 'damage' | 'physics' | 'element' | 'special';
+
+export interface TrapConfig {
+    id: string;
     name: string;
+    type: TrapType;
     color: number;
     cost: number;
+    damage?: number;
+    element?: string; // 'fire', 'water', 'oil', 'lightning'
+    cooldown?: number;
+    pushDistance?: number;
+}
+
+export interface Trap {
+    // The static config data
+    config: TrapConfig;
+    // Dynamic state
     direction?: 'up' | 'down' | 'left' | 'right';
+    // We can keep these for backward compatibility or convenience, 
+    // but eventually they should come from config
+    type: string;
 }
 
 export interface Adventurer {

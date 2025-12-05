@@ -21,21 +21,23 @@ export class TrapSystem {
     }
 
     private registerDefaultEffects() {
-        this.effects['spike'] = (adv, trap, dt) => {
+        this.effects['damage'] = (adv, trap, dt) => {
             // Flat damage on entry
-            console.log(`Spike trap dealing 30 damage to ${adv.id}`);
-            adv.takeDamage(30);
+            const damage = trap.config.damage || 0;
+            console.log(`${trap.config.name} trap dealing ${damage} damage to ${adv.id}`);
+            adv.takeDamage(damage);
         };
 
-        this.effects['spring'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
+        this.effects['physics'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
             const direction = trap.direction || 'up';
+            const pushDistance = trap.config.pushDistance || 0;
             let dx = 0;
             let dy = 0;
 
-            if (direction === 'up') dy = -2;
-            else if (direction === 'down') dy = 2;
-            else if (direction === 'left') dx = -2;
-            else if (direction === 'right') dx = 2;
+            if (direction === 'up') dy = -pushDistance;
+            else if (direction === 'down') dy = pushDistance;
+            else if (direction === 'left') dx = -pushDistance;
+            else if (direction === 'right') dx = pushDistance;
 
             const currentGrid = gridSystem.worldToGrid(adv.x, adv.y);
             if (!currentGrid) return;
@@ -46,7 +48,7 @@ export class TrapSystem {
             // Check bounds and walls
             if (gridSystem.isWalkable(targetX, targetY)) {
                 // Valid jump
-                console.log(`Spring! Jumping to ${targetX}, ${targetY}`);
+                console.log(`${trap.config.name}! Jumping to ${targetX}, ${targetY}`);
 
                 // Teleport
                 const targetWorld = gridSystem.gridToWorld(targetX, targetY);
@@ -71,7 +73,7 @@ export class TrapSystem {
             } else {
                 // Hit a wall or out of bounds
                 console.log('Spring blocked!');
-                adv.takeDamage(20);
+                adv.takeDamage(20); // Collision damage could also be config based later
             }
         };
     }
@@ -90,7 +92,7 @@ export class TrapSystem {
             return;
         }
 
-        const effect = this.effects[trap.type];
+        const effect = this.effects[trap.config.type];
         if (effect) {
             effect(adv, trap, dt, gridSystem, pathfinding, endPos, this, depth);
         }

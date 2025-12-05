@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { GameConfig } from './game/main'
-import { Trap } from './game/systems/GridSystem'
-
-const TRAPS: Trap[] = [
-    { type: 'spike', name: 'Spike', color: 0xff0000, cost: 20 },
-    { type: 'spring', name: 'Spring', color: 0x0000ff, cost: 30, direction: 'up' },
-]
+import { TrapConfig } from './game/systems/GridSystem'
+import { TRAP_DEFINITIONS } from './game/data/TrapRegistry'
 
 function App() {
     const gameRef = useRef<Phaser.Game | null>(null)
     const [selectedTool, setSelectedTool] = useState<string>('wall')
+    const [currentTrapId, setCurrentTrapId] = useState<string | null>(null)
     const [gold, setGold] = useState<number>(100)
 
     useEffect(() => {
@@ -30,9 +27,10 @@ function App() {
         }
     }, [])
 
-    const selectTool = (tool: string, trap: Trap | null) => {
+    const selectTool = (tool: string, trapConfig: TrapConfig | null) => {
         setSelectedTool(tool)
-        const event = new CustomEvent('tool-changed', { detail: { tool, trap } })
+        setCurrentTrapId(trapConfig ? trapConfig.id : null)
+        const event = new CustomEvent('tool-changed', { detail: { tool, trapConfig } })
         window.dispatchEvent(event)
     }
 
@@ -69,13 +67,13 @@ function App() {
                     Wall (10g)
                 </button>
 
-                {TRAPS.map(trap => (
+                {Object.values(TRAP_DEFINITIONS).map(trap => (
                     <button
-                        key={trap.type}
+                        key={trap.id}
                         onClick={() => selectTool('trap', trap)}
                         style={{
                             padding: '10px',
-                            backgroundColor: (selectedTool === 'trap' && (window as any).currentTrap?.type === trap.type) ? '#666' : '#444', // Simplified selection logic
+                            backgroundColor: (selectedTool === 'trap' && currentTrapId === trap.id) ? '#666' : '#444',
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',

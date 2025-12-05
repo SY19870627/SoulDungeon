@@ -37,7 +37,12 @@
     -   **Trigger Once**: Traps trigger only once when an adventurer enters the tile.
     -   **Recursive Trigger**: If a spring teleports an adventurer onto another trap, the new trap triggers immediately.
 
-### 5. Adventurer System
+### 5. Trap System Normalization (Refactoring)
+-   **Data-Driven Design**: Refactored `TrapSystem` to use `TrapConfig` and `TrapRegistry`.
+-   **Extensibility**: Traps now defined in a central registry, supporting future types (elements, physics) without hardcoding.
+-   **UI Integration**: `App.tsx` and `MainScene` updated to render traps dynamically based on config.
+
+### 6. Adventurer System
 -   **WaveManager**: Manages spawning waves of adventurers.
 -   **Adventurer Class**:
     -   **Movement**: Moves along the calculated path.

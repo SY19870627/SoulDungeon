@@ -121,20 +121,20 @@ export class MainScene extends Phaser.Scene {
 
     private setupEvents() {
         window.addEventListener('tool-changed', (e: any) => {
-            const { tool, trap } = e.detail;
+            const { tool, trapConfig } = e.detail;
 
             if (tool === 'wall') {
                 this.currentTool = this.wallTool;
             } else if (tool === 'trap') {
                 this.currentTool = this.trapTool;
-                if (trap) {
-                    this.trapTool.setTrap(trap);
+                if (trapConfig) {
+                    this.trapTool.setTrap(trapConfig);
                 }
             } else if (tool === 'sell') {
                 this.currentTool = this.sellTool;
             }
 
-            console.log(`Tool changed: ${tool}`, trap);
+            console.log(`Tool changed: ${tool}`, trapConfig);
         });
 
         window.addEventListener('start-wave', () => {
@@ -222,7 +222,7 @@ export class MainScene extends Phaser.Scene {
                 const cell = this.gridSystem.getCell(x, y);
                 if (cell && cell.trap) {
                     const origin = this.gridSystem.getGridOrigin(x, y);
-                    this.trapGraphics.fillStyle(cell.trap.color, 0.8);
+                    this.trapGraphics.fillStyle(cell.trap.config.color, 0.8);
 
                     const padding = 10;
                     const cx = origin.x + tileSize / 2;
@@ -231,7 +231,7 @@ export class MainScene extends Phaser.Scene {
                     this.trapGraphics.fillRect(origin.x + padding, origin.y + padding, tileSize - padding * 2, tileSize - padding * 2);
 
                     // Draw direction indicator for Spring
-                    if (cell.trap.type === 'spring' && cell.trap.direction) {
+                    if (cell.trap.config.type === 'physics' && cell.trap.direction) {
                         this.trapGraphics.fillStyle(0xffffff, 1);
 
                         const dir = cell.trap.direction;

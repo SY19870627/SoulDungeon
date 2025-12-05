@@ -1,31 +1,37 @@
 import { Tool } from './Tool';
 import { MainScene } from '../scenes/MainScene';
-import { Trap } from '../systems/GridSystem';
+import { Trap, TrapConfig } from '../systems/GridSystem';
 
 export class TrapTool implements Tool {
     private scene: MainScene;
-    private trapTemplate: Trap | null = null;
+    private trapConfig: TrapConfig | null = null;
 
     constructor(scene: MainScene) {
         this.scene = scene;
     }
 
-    setTrap(trap: Trap) {
-        this.trapTemplate = trap;
+    setTrap(config: TrapConfig) {
+        console.log('TrapTool: setTrap', config);
+        this.trapConfig = config;
     }
 
     handlePointerDown(gridX: number, gridY: number): void {
-        if (!this.trapTemplate) return;
+        console.log('TrapTool: handlePointerDown', gridX, gridY, this.trapConfig);
+        if (!this.trapConfig) return;
 
         const cell = this.scene.getGridSystem().getCell(gridX, gridY);
         if (!cell) return;
 
         // Place Trap
-        if (this.scene.getEconomyManager().canAfford(this.trapTemplate.cost)) {
-            const newTrap = { ...this.trapTemplate, direction: 'up' as const };
+        if (this.scene.getEconomyManager().canAfford(this.trapConfig.cost)) {
+            const newTrap: Trap = {
+                config: this.trapConfig,
+                direction: 'up',
+                type: this.trapConfig.type // For backward compatibility if needed, or just to satisfy interface
+            };
 
             if (this.scene.getGridSystem().placeTrap(gridX, gridY, newTrap)) {
-                this.scene.getEconomyManager().spendGold(this.trapTemplate.cost);
+                this.scene.getEconomyManager().spendGold(this.trapConfig.cost);
                 this.scene.refresh();
             } else {
                 // If failed (e.g. occupied), try to rotate
