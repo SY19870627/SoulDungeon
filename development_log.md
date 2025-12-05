@@ -55,6 +55,15 @@
 -   **Sequential Trap Failure**: Fixed an issue where the second trap in a chain failed to trigger. (Solution: `teleport` method resets `pauseTimer`).
 -   **DevTools**: Enabled Electron DevTools by default for easier debugging.
 
+### 7. Visual Polish & Feedback
+-   **Spring Jump Animation**: Implemented `jumpTo` tween for spring traps, replacing instant teleportation with a parabolic jump arc.
+-   **Adventurer Visuals**: Replaced circle sprite with a directional triangle (arrow) to clearly show facing direction.
+-   **Emote System**:
+    -   **Data-Driven**: Emotes defined in `TrapRegistry` (`emoteSuccess`, `emoteFail`).
+    -   **Reactions**: Adventurers show '😖' on damage, '😱' on spring jump, and '🤕' when blocked.
+    -   **Animation**: Pop-in and float-up fade-out animation for emote bubbles.
+-   **Death Animation**: Adventurers now spin and fade out upon reaching 0 HP.
+
 ## Roadmap Status (Aligned with remark.md)
 
 ### Phase 1: Foundation & Chemical Synergy
@@ -70,7 +79,7 @@
 - [x] Basic Pathfinding & Movement
 - [ ] **Advanced AI** (Knight, Glutton, Thief)
 - [ ] Lure System
-- [ ] Visual Feedback (Damage Numbers, Emotes)
+- [x] Visual Feedback (Damage Numbers, Emotes, Death Animation)
 
 ### Phase 4: Game Loop & Content
 - [ ] Day/Night Cycle (Shop, Economy)
