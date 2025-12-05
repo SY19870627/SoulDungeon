@@ -68,7 +68,7 @@
 
 ### Phase 1: Foundation & Chemical Synergy
 - [x] Grid Map & Obstacles (Walls)
-- [ ] **Chemical Synergy** (Oil+Fire, Water+Lightning) <!-- Priority -->
+- [x] **Chemical Synergy** (Oil+Fire, Water+Lightning) <!-- Priority -->
 
 ### Phase 2: Physical Synergy
 - [x] Physical Displacement (Spring)

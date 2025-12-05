@@ -1,6 +1,7 @@
 import { Tool } from './Tool';
 import { MainScene } from '../scenes/MainScene';
 import { Trap, TrapConfig } from '../systems/GridSystem';
+import { TrapSystem } from '../systems/TrapSystem';
 
 export class TrapTool implements Tool {
     private scene: MainScene;
@@ -27,11 +28,15 @@ export class TrapTool implements Tool {
             const newTrap: Trap = {
                 config: this.trapConfig,
                 direction: 'up',
-                type: this.trapConfig.type // For backward compatibility if needed, or just to satisfy interface
+                type: this.trapConfig.type
             };
 
             if (this.scene.getGridSystem().placeTrap(gridX, gridY, newTrap)) {
                 this.scene.getEconomyManager().spendGold(this.trapConfig.cost);
+
+                // Check for synergy transformation
+                TrapSystem.checkAndApplySynergy(this.scene.getGridSystem(), gridX, gridY);
+
                 this.scene.refresh();
             } else {
                 // If failed (e.g. occupied), try to rotate

@@ -1,4 +1,4 @@
-export type TrapType = 'damage' | 'physics' | 'element' | 'special';
+export type TrapType = 'damage' | 'physics' | 'elemental';
 
 export interface TrapConfig {
     id: string;

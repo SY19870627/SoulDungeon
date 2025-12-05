@@ -1,6 +1,7 @@
 import { Adventurer } from '../objects/Adventurer';
 import { Trap, GridSystem } from './GridSystem';
 import { Pathfinding } from './Pathfinding';
+import { TRAP_DEFINITIONS } from '../data/TrapRegistry';
 
 export type TrapEffect = (
     adventurer: Adventurer,
@@ -107,6 +108,81 @@ export class TrapSystem {
         const effect = this.effects[trap.config.type];
         if (effect) {
             effect(adv, trap, dt, gridSystem, pathfinding, endPos, this, depth);
+        }
+    }
+
+    public static checkAndApplySynergy(gridSystem: GridSystem, x: number, y: number) {
+        const centerCell = gridSystem.getCell(x, y);
+        if (!centerCell || !centerCell.trap) return;
+
+        const centerTrap = centerCell.trap;
+        const centerElement = centerTrap.config.element;
+        if (!centerElement) return;
+
+        const neighbors = [
+            { x: x + 1, y: y }, { x: x - 1, y: y },
+            { x: x, y: y + 1 }, { x: x, y: y - 1 }
+        ];
+
+        let upgradeCenter = false;
+        let newCenterTrapId = '';
+
+        for (const n of neighbors) {
+            const cell = gridSystem.getCell(n.x, n.y);
+            if (cell && cell.trap) {
+                const neighborTrap = cell.trap;
+                const neighborElement = neighborTrap.config.element;
+                if (!neighborElement) continue;
+
+                let synergyFound = false;
+                let newNeighborTrapId = '';
+
+                // Inferno: Oil + Fire (or Inferno)
+                if ((centerElement === 'oil' && (neighborElement === 'fire' || neighborElement === 'fire')) ||
+                    ((centerElement === 'fire' || centerElement === 'fire') && neighborElement === 'oil')) {
+                    synergyFound = true;
+                    newNeighborTrapId = 'inferno';
+                    newCenterTrapId = 'inferno';
+                }
+
+                // Electric Swamp: Water + Lightning (or Electric Swamp)
+                if ((centerElement === 'water' && (neighborElement === 'lightning' || neighborElement === 'lightning')) ||
+                    ((centerElement === 'lightning' || centerElement === 'lightning') && neighborElement === 'water')) {
+                    synergyFound = true;
+                    newNeighborTrapId = 'electric_swamp';
+                    newCenterTrapId = 'electric_swamp';
+                }
+
+                if (synergyFound) {
+                    // Upgrade Neighbor
+                    // We need to construct a new Trap object. 
+                    // Since we don't have the full TRAP_DEFINITIONS here easily without importing, 
+                    // let's assume we can import it.
+                    // But to avoid circular dependency issues if TrapRegistry imports GridSystem (it doesn't),
+                    // we should be fine.
+
+                    // Actually, let's just use the ID and let the caller handle it? 
+                    // No, this method is static, it should do the work.
+                    // We need to import TRAP_DEFINITIONS.
+
+                    const newTrapConfig = TRAP_DEFINITIONS[newNeighborTrapId];
+                    if (newTrapConfig) {
+                        console.log(`Upgrading neighbor at ${n.x},${n.y} to ${newNeighborTrapId}`);
+                        gridSystem.removeTrap(n.x, n.y);
+                        gridSystem.placeTrap(n.x, n.y, { config: newTrapConfig, type: newTrapConfig.type });
+                    }
+                    upgradeCenter = true;
+                }
+            }
+        }
+
+        if (upgradeCenter && newCenterTrapId) {
+            const newTrapConfig = TRAP_DEFINITIONS[newCenterTrapId];
+            if (newTrapConfig) {
+                console.log(`Upgrading center at ${x},${y} to ${newCenterTrapId}`);
+                gridSystem.removeTrap(x, y);
+                gridSystem.placeTrap(x, y, { config: newTrapConfig, type: newTrapConfig.type });
+            }
         }
     }
 }

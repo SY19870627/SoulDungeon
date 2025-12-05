@@ -67,7 +67,7 @@ function App() {
                     Wall (10g)
                 </button>
 
-                {Object.values(TRAP_DEFINITIONS).map(trap => (
+                {Object.values(TRAP_DEFINITIONS).filter(t => t.cost > 0).map(trap => (
                     <button
                         key={trap.id}
                         onClick={() => selectTool('trap', trap)}
