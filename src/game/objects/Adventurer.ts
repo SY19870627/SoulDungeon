@@ -22,7 +22,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private readonly PAUSE_DURATION: number = 0.5; // 0.5 seconds pause
 
     // Visuals
-    private bodySprite: Phaser.GameObjects.Arc;
+    private bodySprite: Phaser.GameObjects.Triangle;
     private healthBarBg: Phaser.GameObjects.Rectangle;
     private healthBarFg: Phaser.GameObjects.Rectangle;
 
@@ -36,8 +36,9 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.speed = config.speed;
         this.path = config.path;
 
-        // Create Body (Circle)
-        this.bodySprite = scene.add.circle(0, 0, 15, 0xffffff);
+        // Create Body (Arrow/Triangle)
+        // Points relative to (0,0): Tip(10,0), BackTop(-10,-10), BackBottom(-10,10)
+        this.bodySprite = scene.add.triangle(0, 0, 10, 0, -10, -10, -10, 10, 0xffffff);
         this.add(this.bodySprite);
 
         // Create Health Bar
@@ -114,6 +115,10 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
             this.x = Phaser.Math.Linear(currentWorld.x, nextWorld.x, this.progress);
             this.y = Phaser.Math.Linear(currentWorld.y, nextWorld.y, this.progress);
+
+            // Update Rotation
+            const angle = Phaser.Math.Angle.Between(currentWorld.x, currentWorld.y, nextWorld.x, nextWorld.y);
+            this.bodySprite.rotation = angle;
         }
 
         return { reachedEnd: false, enteredNewTile: false };
@@ -130,6 +135,10 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
     public jumpTo(targetX: number, targetY: number, duration: number, onComplete: () => void) {
         this.isJumping = true;
+
+        // Face the target
+        const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY);
+        this.bodySprite.rotation = angle;
 
         // Position Tween
         this.scene.tweens.add({

@@ -13,7 +13,7 @@ export class SellTool implements Tool {
         if (!cell) return;
 
         if (cell.trap) {
-            const cost = cell.trap.cost;
+            const cost = cell.trap.config.cost;
             if (this.scene.getGridSystem().removeTrap(gridX, gridY)) {
                 this.scene.getEconomyManager().addGold(cost);
                 this.scene.refresh();
