@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
+import { MainScene } from './scenes/MainScene';
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     parent: 'game-container',
     width: 1280,
     height: 720,
-    backgroundColor: '#000000',
+    backgroundColor: '#1a1a1a', // Darker background for dungeon feel
     physics: {
         default: 'arcade',
         arcade: {
@@ -13,25 +14,5 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
             debug: true
         }
     },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
+    scene: [MainScene]
 };
-
-function preload(this: Phaser.Scene) {
-    // this.load.image('logo', 'assets/logo.png');
-}
-
-function create(this: Phaser.Scene) {
-    const graphics = this.add.graphics();
-    graphics.fillStyle(0x00ff00, 1);
-    graphics.fillRect(100, 100, 100, 100);
-
-    this.add.text(100, 220, 'Phaser Canvas', { color: '#00ff00' });
-}
-
-function update(this: Phaser.Scene) {
-    // Game loop
-}

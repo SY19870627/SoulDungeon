@@ -1,237 +1,272 @@
 import Phaser from 'phaser';
-import { ToolType, TOOLS } from '../../data/tools';
-import { GridSystem } from '../systems/GridSystem';
-import { Hero } from '../objects/Hero';
-import { HEROES, HeroType } from '../../data/heroes';
-
-// Define combo visuals mapping
-const COMBO_VISUALS: Record<string, { icon: string, color: number }> = {
-    inferno: { icon: '🌋', color: 0xe74c3c },
-    electric_swamp: { icon: '💠', color: 0x3498db },
-    toxic_cloud: { icon: '🤢', color: 0x2ecc71 }
-};
+import { GridSystem, Trap } from '../systems/GridSystem';
+import { Pathfinding } from '../systems/Pathfinding';
+import { WaveManager } from '../systems/WaveManager';
+import { EconomyManager } from '../systems/EconomyManager';
 
 export class MainScene extends Phaser.Scene {
-    private gridSize = 50;
-    private mapSize = 7;
-    private gridGraphics!: Phaser.GameObjects.Graphics;
-    private items: Map<string, Phaser.GameObjects.Text>;
-    private currentTool: ToolType = 'spring';
     private gridSystem!: GridSystem;
+    private pathfinding!: Pathfinding;
+    private waveManager!: WaveManager;
+    private economyManager!: EconomyManager;
 
-    private heroes: Hero[] = [];
-    private isSimulating = false;
+    private gridGraphics: Phaser.GameObjects.Graphics | null = null;
+    private highlightGraphics: Phaser.GameObjects.Graphics | null = null;
+    private pathGraphics: Phaser.GameObjects.Graphics | null = null;
+    private wallGraphics: Phaser.GameObjects.Graphics | null = null;
+    private trapGraphics: Phaser.GameObjects.Graphics | null = null;
+    private adventurerGraphics: Phaser.GameObjects.Graphics | null = null;
+
+    private startPos = { x: 0, y: 0 };
+    private endPos = { x: 9, y: 9 };
+
+    private selectedTrap: Trap | null = null;
 
     constructor() {
-        super({ key: 'MainScene' });
-        this.items = new Map();
+        super('MainScene');
     }
 
     create() {
-        // Initialize Grid System
-        this.gridSystem = new GridSystem(this.mapSize, this.mapSize, (x, y, type, rotate) => {
-            this.updateGridVisual(x, y, type, rotate);
-        });
+        // Calculate offsets to center the grid
+        const gridWidth = 10;
+        const gridHeight = 10;
+        const tileSize = 64;
 
-        this.createGrid();
-        this.setupInteraction();
+        const totalWidth = gridWidth * tileSize;
+        const totalHeight = gridHeight * tileSize;
 
-        // Listen for tool changes from React
-        this.game.events.on('tool-changed', (tool: ToolType) => {
-            this.currentTool = tool;
-        });
+        const offsetX = (this.scale.width - totalWidth) / 2;
+        const offsetY = (this.scale.height - totalHeight) / 2;
 
-        // Listen for spawn events
-        this.game.events.on('spawn-hero', (type: HeroType) => {
-            this.spawnHero(type);
-        });
-    }
+        // Initialize GridSystem with calculated offsets
+        this.gridSystem = new GridSystem(gridWidth, gridHeight, tileSize, offsetX, offsetY);
+        this.pathfinding = new Pathfinding(this.gridSystem);
+        this.waveManager = new WaveManager(this, this.gridSystem, this.pathfinding);
+        this.economyManager = new EconomyManager(100); // Start with 100 gold
+        this.waveManager.setEconomyManager(this.economyManager);
 
-    private createGrid() {
         this.gridGraphics = this.add.graphics();
-        this.gridGraphics.lineStyle(1, 0x444444, 1);
+        this.highlightGraphics = this.add.graphics();
+        this.pathGraphics = this.add.graphics();
+        this.wallGraphics = this.add.graphics();
+        this.trapGraphics = this.add.graphics();
+        this.adventurerGraphics = this.add.graphics();
 
-        const totalSize = this.gridSize * this.mapSize;
+        this.drawGrid();
+        this.setupInput();
+        this.setupEvents();
+        this.updatePath(); // Initial path
 
-        for (let x = 0; x <= totalSize; x += this.gridSize) {
-            this.gridGraphics.moveTo(x, 0);
-            this.gridGraphics.lineTo(x, totalSize);
-        }
-
-        for (let y = 0; y <= totalSize; y += this.gridSize) {
-            this.gridGraphics.moveTo(0, y);
-            this.gridGraphics.lineTo(totalSize, y);
-        }
-
-        this.gridGraphics.strokePath();
-
-        const offsetX = (this.cameras.main.width - totalSize) / 2;
-        const offsetY = (this.cameras.main.height - totalSize) / 2;
-        this.cameras.main.setScroll(-offsetX, -offsetY);
+        // Initial gold update
+        this.time.delayedCall(100, () => {
+            window.dispatchEvent(new CustomEvent('gold-updated', { detail: this.economyManager.getGold() }));
+        });
     }
 
-    private setupInteraction() {
+    update(time: number, delta: number) {
+        this.waveManager.update(time, delta);
+        this.drawAdventurers();
+    }
+
+    private setupEvents() {
+        window.addEventListener('select-trap', (e: any) => {
+            const trap = e.detail as Trap | null;
+            this.selectedTrap = trap;
+            console.log('Selected trap:', trap);
+        });
+
+        window.addEventListener('start-wave', () => {
+            console.log('Starting wave...');
+            this.waveManager.startWave();
+        });
+
+        this.economyManager.on('gold-updated', (gold: number) => {
+            window.dispatchEvent(new CustomEvent('gold-updated', { detail: gold }));
+        });
+    }
+
+    private drawGrid() {
+        if (!this.gridGraphics) return;
+
+        this.gridGraphics.clear();
+        this.gridGraphics.lineStyle(2, 0xffffff, 0.5);
+
+        const width = this.gridSystem.getWidth();
+        const height = this.gridSystem.getHeight();
+        const tileSize = this.gridSystem.getTileSize();
+
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const origin = this.gridSystem.getGridOrigin(x, y);
+                this.gridGraphics.strokeRect(origin.x, origin.y, tileSize, tileSize);
+            }
+        }
+
+        // Draw Start and End markers
+        const startOrigin = this.gridSystem.getGridOrigin(this.startPos.x, this.startPos.y);
+        this.gridGraphics.fillStyle(0x00ff00, 0.5); // Green for Start
+        this.gridGraphics.fillRect(startOrigin.x, startOrigin.y, tileSize, tileSize);
+
+        const endOrigin = this.gridSystem.getGridOrigin(this.endPos.x, this.endPos.y);
+        this.gridGraphics.fillStyle(0xff0000, 0.5); // Red for End
+        this.gridGraphics.fillRect(endOrigin.x, endOrigin.y, tileSize, tileSize);
+    }
+
+    private setupInput() {
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            const gridPos = this.gridSystem.worldToGrid(pointer.x, pointer.y);
+            this.updateHighlight(gridPos);
+        });
+
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            const worldX = pointer.worldX;
-            const worldY = pointer.worldY;
+            const gridPos = this.gridSystem.worldToGrid(pointer.x, pointer.y);
+            if (gridPos) {
+                if (this.selectedTrap) {
+                    // Place trap
+                    if (this.economyManager.canAfford(this.selectedTrap.cost)) {
+                        if (this.gridSystem.placeTrap(gridPos.x, gridPos.y, this.selectedTrap)) {
+                            this.economyManager.spendGold(this.selectedTrap.cost);
+                            this.drawTraps();
+                        } else {
+                            // Maybe remove trap if clicking on existing one?
+                            // Removing logic could also refund? For now, simple remove.
+                            this.gridSystem.removeTrap(gridPos.x, gridPos.y);
+                            this.drawTraps();
+                        }
+                    } else {
+                        console.log('Not enough gold!');
+                    }
+                } else {
+                    // Toggle wall (Cost: 10 for example, or free for now? Let's make it cost 10)
+                    const WALL_COST = 10;
+                    const cell = this.gridSystem.getCell(gridPos.x, gridPos.y);
 
-            const gridX = Math.floor(worldX / this.gridSize);
-            const gridY = Math.floor(worldY / this.gridSize);
-
-            if (gridX >= 0 && gridX < this.mapSize && gridY >= 0 && gridY < this.mapSize) {
-                this.handleGridClick(gridX, gridY, pointer);
+                    if (cell && !cell.isWall) {
+                        // Building wall
+                        if (this.economyManager.canAfford(WALL_COST)) {
+                            if (this.gridSystem.toggleWall(gridPos.x, gridPos.y)) {
+                                this.economyManager.spendGold(WALL_COST);
+                                this.drawWalls();
+                                this.updatePath();
+                            }
+                        }
+                    } else {
+                        // Removing wall (Refund? Or just remove)
+                        if (this.gridSystem.toggleWall(gridPos.x, gridPos.y)) {
+                            // Wall removed (toggleWall returns new state, so if false it means removed)
+                        } else {
+                            // Wall removed
+                            this.drawWalls();
+                            this.updatePath();
+                        }
+                    }
+                }
             }
         });
     }
 
-    private handleGridClick(x: number, y: number, pointer: Phaser.Input.Pointer) {
-        // Right click or Eraser
-        if (pointer.rightButtonDown() || this.currentTool === 'eraser') {
-            this.gridSystem.setCell(x, y, 'empty' as any); // 'empty' is handled as clear
-            return;
-        }
+    private drawWalls() {
+        if (!this.wallGraphics) return;
+        this.wallGraphics.clear();
+        this.wallGraphics.fillStyle(0x888888, 1);
 
-        // Place item via System
-        this.gridSystem.setCell(x, y, this.currentTool);
-    }
+        const width = this.gridSystem.getWidth();
+        const height = this.gridSystem.getHeight();
+        const tileSize = this.gridSystem.getTileSize();
 
-    private updateGridVisual(x: number, y: number, type: string, rotate: number) {
-        const key = `${x},${y}`;
-
-        // Always remove old visual first
-        if (this.items.has(key)) {
-            this.items.get(key)?.destroy();
-            this.items.delete(key);
-        }
-
-        if (type === 'empty') return;
-
-        let icon = '';
-        let color = '#ffffff';
-
-        // Check standard tools
-        const toolDef = TOOLS.find(t => t.id === type);
-        if (toolDef) {
-            icon = toolDef.icon;
-        }
-        // Check combos
-        else if (COMBO_VISUALS[type]) {
-            icon = COMBO_VISUALS[type].icon;
-            // We could use tint, but for Text object color style is string
-            // For now just use icon
-        }
-
-        if (!icon) return;
-
-        const text = this.add.text(
-            x * this.gridSize + this.gridSize / 2,
-            y * this.gridSize + this.gridSize / 2,
-            icon,
-            { fontSize: '32px', color: color }
-        );
-        text.setOrigin(0.5);
-        text.setRotation(rotate * Math.PI / 2); // 90 degrees per rotation step
-
-        this.items.set(key, text);
-
-        // Animation
-        this.tweens.add({
-            targets: text,
-            scale: { from: 0.5, to: 1 },
-            duration: 200,
-            ease: 'Back.out'
-        });
-    }
-
-    private async spawnHero(type: HeroType) {
-        if (this.isSimulating) return; // Simple single-hero simulation for now
-        this.isSimulating = true;
-
-        const def = HEROES[type];
-        const startX = 0;
-        const startY = 0;
-
-        const hero = new Hero(this,
-            startX * this.gridSize + this.gridSize / 2,
-            startY * this.gridSize + this.gridSize / 2,
-            def
-        );
-        hero.gridX = startX;
-        hero.gridY = startY;
-        this.heroes.push(hero);
-
-        await this.runSimulation(hero);
-    }
-
-    private async runSimulation(hero: Hero) {
-        let steps = 0;
-        const maxSteps = 30;
-
-        while (steps < maxSteps && hero.currentHp > 0) {
-            steps++;
-            await new Promise(r => setTimeout(r, 500)); // Wait a bit
-
-            // 1. AI Decision
-            const nextPos = this.gridSystem.getSmartMove(hero.gridX, hero.gridY, hero.definition.id);
-
-            // 2. Move
-            await hero.moveGrid(nextPos.x, nextPos.y, this.gridSize);
-
-            // 3. Check Traps/Environment
-            this.checkCellInteraction(hero);
-
-            // 4. Check Goal
-            if (hero.gridX === this.mapSize - 1 && hero.gridY === this.mapSize - 1) {
-                console.log('Hero escaped!');
-                hero.setAlpha(0.5);
-                break;
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                if (!this.gridSystem.isWalkable(x, y)) {
+                    const origin = this.gridSystem.getGridOrigin(x, y);
+                    this.wallGraphics.fillRect(origin.x, origin.y, tileSize, tileSize);
+                }
             }
         }
-
-        if (hero.currentHp <= 0) {
-            console.log('Hero died!');
-            hero.destroy();
-        } else {
-            // Cleanup after run
-            setTimeout(() => {
-                hero.destroy();
-                this.heroes = this.heroes.filter(h => h !== hero);
-            }, 1000);
-        }
-
-        this.isSimulating = false;
     }
 
-    private checkCellInteraction(hero: Hero) {
-        const cell = this.gridSystem.getCell(hero.gridX, hero.gridY);
-        if (!cell) return;
+    private drawTraps() {
+        if (!this.trapGraphics) return;
+        this.trapGraphics.clear();
 
-        let damage = 0;
+        const width = this.gridSystem.getWidth();
+        const height = this.gridSystem.getHeight();
+        const tileSize = this.gridSystem.getTileSize();
 
-        // Trap Logic
-        if (cell.type === 'spike') damage = 30;
-        if (cell.type === 'inferno') damage = 60;
-        if (cell.type === 'electric_swamp') damage = 60;
-        if (cell.type === 'toxic_cloud') damage = 50;
-
-        // Spring Logic (Instant Move)
-        if (cell.type === 'spring') {
-            // TODO: Implement spring push logic similar to game.html
-            // For now just log it
-            console.log('Spring triggered!');
-        }
-
-        // Lure Logic (Eat it)
-        if (cell.type === hero.definition.lure) {
-            console.log('Lure eaten!');
-            this.gridSystem.setCell(hero.gridX, hero.gridY, 'empty');
-        }
-
-        if (damage > 0) {
-            const dead = hero.takeDamage(damage);
-            if (dead) {
-                // Hero death handled in loop
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const cell = this.gridSystem.getCell(x, y);
+                if (cell && cell.trap) {
+                    const origin = this.gridSystem.getGridOrigin(x, y);
+                    this.trapGraphics.fillStyle(cell.trap.color, 0.8);
+                    // Draw a smaller rect for trap
+                    const padding = 10;
+                    this.trapGraphics.fillRect(origin.x + padding, origin.y + padding, tileSize - padding * 2, tileSize - padding * 2);
+                }
             }
+        }
+    }
+
+    private drawAdventurers() {
+        if (!this.adventurerGraphics) return;
+        this.adventurerGraphics.clear();
+
+        const adventurers = this.waveManager.getAdventurers();
+
+        for (const adv of adventurers) {
+            // Draw adventurer body
+            this.adventurerGraphics.fillStyle(0xffffff, 1); // White for adventurers
+            this.adventurerGraphics.fillCircle(adv.worldPosition.x, adv.worldPosition.y, 15);
+
+            // Draw Health Bar
+            const width = 40;
+            const height = 6;
+            const x = adv.worldPosition.x - width / 2;
+            const y = adv.worldPosition.y - 25;
+
+            // Background (Red)
+            this.adventurerGraphics.fillStyle(0xff0000, 1);
+            this.adventurerGraphics.fillRect(x, y, width, height);
+
+            // Foreground (Green)
+            const hpPercent = Math.max(0, adv.hp / adv.maxHp);
+            this.adventurerGraphics.fillStyle(0x00ff00, 1);
+            this.adventurerGraphics.fillRect(x, y, width * hpPercent, height);
+        }
+    }
+
+    private updatePath() {
+        if (!this.pathGraphics) return;
+        this.pathGraphics.clear();
+
+        const path = this.pathfinding.findPath(this.startPos, this.endPos);
+
+        if (path.length > 0) {
+            this.pathGraphics.lineStyle(4, 0xffff00, 1); // Yellow path
+            this.pathGraphics.beginPath();
+
+            const startWorld = this.gridSystem.gridToWorld(path[0].x, path[0].y);
+            this.pathGraphics.moveTo(startWorld.x, startWorld.y);
+
+            for (let i = 1; i < path.length; i++) {
+                const worldPos = this.gridSystem.gridToWorld(path[i].x, path[i].y);
+                this.pathGraphics.lineTo(worldPos.x, worldPos.y);
+            }
+
+            this.pathGraphics.strokePath();
+        }
+    }
+
+    private updateHighlight(gridPos: { x: number, y: number } | null) {
+        if (!this.highlightGraphics) return;
+
+        this.highlightGraphics.clear();
+
+        if (gridPos) {
+            const origin = this.gridSystem.getGridOrigin(gridPos.x, gridPos.y);
+            const tileSize = this.gridSystem.getTileSize();
+
+            this.highlightGraphics.fillStyle(0x00ff00, 0.3);
+            this.highlightGraphics.fillRect(origin.x, origin.y, tileSize, tileSize);
         }
     }
 }
