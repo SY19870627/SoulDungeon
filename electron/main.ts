@@ -1,18 +1,27 @@
 import { app, BrowserWindow } from 'electron'
-import path from 'node:path'
+import path from 'path'
 
-process.env.DIST = path.join(__dirname, '../dist')
-process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(__dirname, '../public')
+// The built directory structure
+//
+// ├─┬ dist
+// │ └── index.html
+// ├── dist-electron
+// │ ├── main.js
+// │ └── preload.js
+// 
+const DIST = path.join(__dirname, '../dist')
+const VITE_PUBLIC = app.isPackaged ? DIST : path.join(__dirname, '../public')
+
+process.env.DIST = DIST
+process.env.VITE_PUBLIC = VITE_PUBLIC
 
 let win: BrowserWindow | null
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
+
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 function createWindow() {
     win = new BrowserWindow({
-        icon: path.join(process.env.VITE_PUBLIC || '', 'electron-vite.svg'),
-        width: 1280,
-        height: 800,
+        icon: path.join(VITE_PUBLIC, 'electron-vite.svg'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         },
@@ -25,9 +34,12 @@ function createWindow() {
 
     if (VITE_DEV_SERVER_URL) {
         win.loadURL(VITE_DEV_SERVER_URL)
+    } else if (!app.isPackaged) {
+        // Fallback for dev mode if VITE_DEV_SERVER_URL is not set
+        win.loadURL('http://localhost:5173')
     } else {
         // win.loadFile('dist/index.html')
-        win.loadFile(path.join(process.env.DIST || '', 'index.html'))
+        win.loadFile(path.join(DIST, 'index.html'))
     }
 }
 
@@ -37,6 +49,7 @@ function createWindow() {
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
+        win = null
     }
 })
 
