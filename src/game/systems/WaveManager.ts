@@ -1,13 +1,16 @@
 import Phaser from 'phaser';
-import { GridSystem, Adventurer } from './GridSystem';
+import { GridSystem } from './GridSystem';
 import { Pathfinding } from './Pathfinding';
 import { EconomyManager } from './EconomyManager';
+import { Adventurer } from '../objects/Adventurer';
+import { TrapSystem } from './TrapSystem';
 
 export class WaveManager {
     private scene: Phaser.Scene;
     private gridSystem: GridSystem;
     private pathfinding: Pathfinding;
     private economyManager: EconomyManager | null = null;
+    private trapSystem: TrapSystem;
 
     private adventurers: Adventurer[] = [];
     private spawnTimer: Phaser.Time.TimerEvent | null = null;
@@ -25,6 +28,7 @@ export class WaveManager {
         this.scene = scene;
         this.gridSystem = gridSystem;
         this.pathfinding = pathfinding;
+        this.trapSystem = new TrapSystem();
     }
 
     public setEconomyManager(economyManager: EconomyManager) {
@@ -57,17 +61,13 @@ export class WaveManager {
 
         const startWorld = this.gridSystem.gridToWorld(this.startPos.x, this.startPos.y);
 
-        const adventurer: Adventurer = {
+        const adventurer = new Adventurer(this.scene, startWorld.x, startWorld.y, {
             id: Math.random().toString(36).substr(2, 9),
-            type: 'warrior',
             hp: 100,
             maxHp: 100,
-            speed: 2, // 2 tiles per second
-            gridPosition: { ...this.startPos },
-            worldPosition: { ...startWorld },
-            path: path,
-            progress: 0
-        };
+            speed: 2,
+            path: path
+        });
 
         this.adventurers.push(adventurer);
         console.log('Spawned adventurer:', adventurer.id);
@@ -78,70 +78,49 @@ export class WaveManager {
 
         for (let i = this.adventurers.length - 1; i >= 0; i--) {
             const adv = this.adventurers[i];
-            this.updateAdventurer(adv, dt, i);
-        }
-    }
 
-    private updateAdventurer(adv: Adventurer, dt: number, index: number) {
-        if (adv.hp <= 0) {
-            // Dead
-            this.adventurers.splice(index, 1);
-            if (this.economyManager) {
-                this.economyManager.addGold(10); // Reward 10 gold
+            // Check death
+            if (adv.hp <= 0) {
+                this.killAdventurer(i);
+                continue;
             }
-            console.log('Adventurer died!');
-            return;
-        }
 
-        if (adv.path.length <= 1) {
-            // Reached end
-            this.adventurers.splice(index, 1);
-            console.log('Adventurer reached treasure!');
-            return;
-        }
+            // Move
+            const reachedEnd = adv.move(dt, this.gridSystem);
 
-        // Move along path
-        adv.progress += adv.speed * dt;
+            if (reachedEnd) {
+                this.removeAdventurer(i);
+                console.log('Adventurer reached treasure!');
+                continue;
+            }
 
-        if (adv.progress >= 1) {
-            // Reached next tile
-            adv.progress -= 1;
-            adv.path.shift(); // Remove current tile
-
-            if (adv.path.length > 0) {
-                adv.gridPosition = { ...adv.path[0] };
-
-                // Check for traps on new tile
-                const cell = this.gridSystem.getCell(adv.gridPosition.x, adv.gridPosition.y);
+            // Check traps
+            const gridPos = this.gridSystem.worldToGrid(adv.x, adv.y);
+            if (gridPos) {
+                const cell = this.gridSystem.getCell(gridPos.x, gridPos.y);
                 if (cell && cell.trap) {
-                    this.triggerTrap(adv, cell.trap);
+                    this.trapSystem.trigger(adv, cell.trap, dt, this.gridSystem, this.pathfinding, this.endPos);
                 }
             }
         }
-
-        // Interpolate world position
-        if (adv.path.length > 1) {
-            const currentTile = adv.path[0];
-            const nextTile = adv.path[1];
-
-            const currentWorld = this.gridSystem.gridToWorld(currentTile.x, currentTile.y);
-            const nextWorld = this.gridSystem.gridToWorld(nextTile.x, nextTile.y);
-
-            adv.worldPosition.x = Phaser.Math.Linear(currentWorld.x, nextWorld.x, adv.progress);
-            adv.worldPosition.y = Phaser.Math.Linear(currentWorld.y, nextWorld.y, adv.progress);
-        }
     }
 
-    private triggerTrap(adv: Adventurer, trap: any) {
-        console.log(`Trap triggered: ${trap.type}`);
-        if (trap.type === 'spike') {
-            adv.hp -= 50; // Deal 50 damage
-        } else if (trap.type === 'spring') {
-            // Push back logic (simplified: just delay progress or move back one tile if possible)
-            // For now, let's just stun them (reduce progress) or deal minor damage
-            adv.progress = -0.5; // Push back progress
+    private killAdventurer(index: number) {
+        const adv = this.adventurers[index];
+        adv.destroy(); // Remove visual
+        this.adventurers.splice(index, 1);
+        if (this.economyManager) {
+            this.economyManager.addGold(10);
         }
+        console.log('Adventurer died!');
     }
+
+    private removeAdventurer(index: number) {
+        const adv = this.adventurers[index];
+        adv.destroy();
+        this.adventurers.splice(index, 1);
+    }
+
 
     public getAdventurers(): Adventurer[] {
         return this.adventurers;

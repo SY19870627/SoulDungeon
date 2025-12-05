@@ -3,6 +3,7 @@ export interface Trap {
     name: string;
     color: number;
     cost: number;
+    direction?: 'up' | 'down' | 'left' | 'right';
 }
 
 export interface Adventurer {
@@ -84,7 +85,7 @@ export class GridSystem {
 
     public placeTrap(x: number, y: number, trap: Trap): boolean {
         const cell = this.getCell(x, y);
-        if (cell && !cell.isWall) {
+        if (cell && !cell.isWall && !cell.trap) {
             cell.trap = trap;
             return true;
         }

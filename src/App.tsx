@@ -5,7 +5,7 @@ import { Trap } from './game/systems/GridSystem'
 
 const TRAPS: Trap[] = [
     { type: 'spike', name: 'Spike', color: 0xff0000, cost: 20 },
-    { type: 'spring', name: 'Spring', color: 0x0000ff, cost: 30 },
+    { type: 'spring', name: 'Spring', color: 0x0000ff, cost: 30, direction: 'up' },
 ]
 
 function App() {
@@ -32,7 +32,7 @@ function App() {
 
     const selectTool = (tool: string, trap: Trap | null) => {
         setSelectedTool(tool)
-        const event = new CustomEvent('select-trap', { detail: trap })
+        const event = new CustomEvent('tool-changed', { detail: { tool, trap } })
         window.dispatchEvent(event)
     }
 
@@ -72,10 +72,10 @@ function App() {
                 {TRAPS.map(trap => (
                     <button
                         key={trap.type}
-                        onClick={() => selectTool(trap.type, trap)}
+                        onClick={() => selectTool('trap', trap)}
                         style={{
                             padding: '10px',
-                            backgroundColor: selectedTool === trap.type ? '#666' : '#444',
+                            backgroundColor: (selectedTool === 'trap' && (window as any).currentTrap?.type === trap.type) ? '#666' : '#444', // Simplified selection logic
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
@@ -95,6 +95,21 @@ function App() {
                         <span style={{ fontSize: '0.8em', color: '#aaa' }}>{trap.cost}g</span>
                     </button>
                 ))}
+
+                <button
+                    onClick={() => selectTool('sell', null)}
+                    style={{
+                        padding: '10px',
+                        backgroundColor: selectedTool === 'sell' ? '#c0392b' : '#e74c3c',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        marginTop: '10px'
+                    }}
+                >
+                    Sell (Refund)
+                </button>
 
                 <div style={{ height: '20px' }}></div>
 
