@@ -50,7 +50,24 @@
 -   **Sequential Trap Failure**: Fixed an issue where the second trap in a chain failed to trigger. (Solution: `teleport` method resets `pauseTimer`).
 -   **DevTools**: Enabled Electron DevTools by default for easier debugging.
 
-## Next Steps
--   **Visual Polish**: Floating damage numbers, better sprites.
--   **Content Expansion**: More trap types, different adventurer types.
--   **Game Loop**: Win/Loss conditions, multiple levels.
+## Roadmap Status (Aligned with remark.md)
+
+### Phase 1: Foundation & Chemical Synergy
+- [x] Grid Map & Obstacles (Walls)
+- [ ] **Chemical Synergy** (Oil+Fire, Water+Lightning) <!-- Priority -->
+
+### Phase 2: Physical Synergy
+- [x] Physical Displacement (Spring)
+- [x] Combo Detection (Recursive triggers)
+- [ ] Dummy Simulation
+
+### Phase 3: Adventurer AI & Lures
+- [x] Basic Pathfinding & Movement
+- [ ] **Advanced AI** (Knight, Glutton, Thief)
+- [ ] Lure System
+- [ ] Visual Feedback (Damage Numbers, Emotes)
+
+### Phase 4: Game Loop & Content
+- [ ] Day/Night Cycle (Shop, Economy)
+- [ ] Relic System
+- [ ] More Content (Levels, Monsters)
