@@ -206,4 +206,24 @@ export class Adventurer extends Phaser.GameObjects.Container {
             ease: 'Sine.easeOut'
         });
     }
+
+    public isDying: boolean = false;
+
+    public die(onComplete: () => void) {
+        this.isDying = true;
+
+        // Stop any movement or other tweens
+        this.scene.tweens.killTweensOf(this);
+        this.scene.tweens.killTweensOf(this.bodySprite);
+
+        this.scene.tweens.add({
+            targets: this,
+            scale: 0,
+            angle: 360,
+            alpha: 0,
+            duration: 500,
+            ease: 'Power2',
+            onComplete: onComplete
+        });
+    }
 }

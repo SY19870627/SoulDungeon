@@ -84,11 +84,15 @@ export class WaveManager {
 
             // Check death
             if (adv.hp <= 0) {
-                this.killAdventurer(i);
+                if (!adv.isDying) {
+                    adv.die(() => this.killAdventurer(adv));
+                }
                 continue;
             }
 
             // Move
+            if (adv.isDying) continue; // Don't move if dying
+
             const { reachedEnd, enteredNewTile } = adv.move(dt, this.gridSystem);
 
             if (reachedEnd) {
@@ -111,14 +115,16 @@ export class WaveManager {
         }
     }
 
-    private killAdventurer(index: number) {
-        const adv = this.adventurers[index];
-        adv.destroy(); // Remove visual
-        this.adventurers.splice(index, 1);
-        if (this.economyManager) {
-            this.economyManager.addGold(10);
+    private killAdventurer(adv: Adventurer) {
+        const index = this.adventurers.indexOf(adv);
+        if (index !== -1) {
+            adv.destroy(); // Remove visual
+            this.adventurers.splice(index, 1);
+            if (this.economyManager) {
+                this.economyManager.addGold(10);
+            }
+            console.log('Adventurer died!');
         }
-        console.log('Adventurer died!');
     }
 
     private removeAdventurer(index: number) {
