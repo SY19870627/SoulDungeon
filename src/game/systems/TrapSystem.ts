@@ -53,22 +53,25 @@ export class TrapSystem {
                 // Teleport
                 const targetWorld = gridSystem.gridToWorld(targetX, targetY);
 
-                // Recalculate Path
-                const newPath = pathfinding.findPath({ x: targetX, y: targetY }, endPos);
+                // Use Jump Animation
+                adv.jumpTo(targetWorld.x, targetWorld.y, 500, () => {
+                    // Recalculate Path
+                    const newPath = pathfinding.findPath({ x: targetX, y: targetY }, endPos);
 
-                if (newPath.length > 0) {
-                    adv.teleport(targetWorld.x, targetWorld.y, newPath);
-                } else {
-                    console.log('No path from jump target!');
-                    adv.teleport(targetWorld.x, targetWorld.y, []); // Stop moving
-                }
+                    if (newPath.length > 0) {
+                        adv.teleport(targetWorld.x, targetWorld.y, newPath);
+                    } else {
+                        console.log('No path from jump target!');
+                        adv.teleport(targetWorld.x, targetWorld.y, []); // Stop moving
+                    }
 
-                // Check for trap at landing position (Recursive Trigger)
-                const landingCell = gridSystem.getCell(targetX, targetY);
-                if (landingCell && landingCell.trap) {
-                    console.log('Landed on another trap!');
-                    trapSystem.trigger(adv, landingCell.trap, dt, gridSystem, pathfinding, endPos, depth + 1);
-                }
+                    // Check for trap at landing position (Recursive Trigger)
+                    const landingCell = gridSystem.getCell(targetX, targetY);
+                    if (landingCell && landingCell.trap) {
+                        console.log('Landed on another trap!');
+                        trapSystem.trigger(adv, landingCell.trap, dt, gridSystem, pathfinding, endPos, depth + 1);
+                    }
+                });
 
             } else {
                 // Hit a wall or out of bounds

@@ -15,6 +15,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public speed: number;
     public path: { x: number, y: number }[];
     public progress: number = 0;
+    public isJumping: boolean = false;
 
     // Pause Logic
     private pauseTimer: number = 0;
@@ -69,6 +70,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
     }
 
     public move(dt: number, gridSystem: any): { reachedEnd: boolean, enteredNewTile: boolean } {
+        if (this.isJumping) return { reachedEnd: false, enteredNewTile: false };
+
         // Returns true if reached end
         if (this.path.length <= 1) return { reachedEnd: true, enteredNewTile: false };
 
@@ -123,5 +126,31 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.progress = 0;
         this.pauseTimer = 0; // Critical: Reset pause timer
         console.log(`Adventurer ${this.id} teleported to ${x}, ${y}. Pause timer reset.`);
+    }
+
+    public jumpTo(targetX: number, targetY: number, duration: number, onComplete: () => void) {
+        this.isJumping = true;
+
+        // Position Tween
+        this.scene.tweens.add({
+            targets: this,
+            x: targetX,
+            y: targetY,
+            duration: duration,
+            ease: 'Linear',
+            onComplete: () => {
+                this.isJumping = false;
+                onComplete();
+            }
+        });
+
+        // Scale Tween (Simulate height)
+        this.scene.tweens.add({
+            targets: this.bodySprite,
+            scale: 1.5,
+            duration: duration / 2,
+            yoyo: true,
+            ease: 'Sine.easeOut'
+        });
     }
 }
