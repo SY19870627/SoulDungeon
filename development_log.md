@@ -81,6 +81,19 @@
 - [ ] Lure System
 - [x] Visual Feedback (Damage Numbers, Emotes, Death Animation)
 
+### 8. Visual & Animation Refactor (2025-12-06)
+-   **Asset Integration**: Imported "Kenney Tiny Dungeon" assets to `public/assets`.
+-   **Sprite-Based Rendering**:
+    -   Refactored `MainScene` to use `Phaser.GameObjects.Sprite` for traps instead of geometric graphics.
+    -   Implemented `syncTrapSprites` for robust sprite state management (add/update/remove).
+-   **Adventurer Visuals**:
+    -   Replaced triangle shape with `hero_run_sheet` sprite.
+    -   Implemented directional movement animations (`run-down`, `run-right`, `run-up`) and flip logic.
+    -   Restored class structure and fixed syntax errors during refactor.
+-   **Visual Polish**:
+    -   Enabled `pixelArt: true` in `GameConfig` for crisp retro visuals.
+    -   Enforced render depths (Grid: 0, Trap: 10, Wall: 20, Adventurer: 30, Highlight: 100) to ensure correct layering.
+
 ### Phase 4: Game Loop & Content
 - [ ] Day/Night Cycle (Shop, Economy)
 - [ ] Relic System
