@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { MainScene } from '../scenes/MainScene';
 
 export interface AdventurerConfig {
     id: string;
@@ -22,7 +23,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private readonly PAUSE_DURATION: number = 0.5; // 0.5 seconds pause
 
     // Visuals
-    private bodySprite: Phaser.GameObjects.Triangle;
+    private bodySprite: Phaser.GameObjects.Sprite;
     private healthBarBg: Phaser.GameObjects.Rectangle;
     private healthBarFg: Phaser.GameObjects.Rectangle;
     private emoteText: Phaser.GameObjects.Text;
@@ -30,6 +31,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     constructor(scene: Phaser.Scene, x: number, y: number, config: AdventurerConfig) {
         super(scene, x, y);
         this.scene.add.existing(this);
+        this.setDepth(MainScene.DEPTH_ADVENTURER);
 
         this.id = config.id;
         this.hp = config.hp;
@@ -37,9 +39,9 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.speed = config.speed;
         this.path = config.path;
 
-        // Create Body (Arrow/Triangle)
-        // Points relative to (0,0): Tip(10,0), BackTop(-10,-10), BackBottom(-10,10)
-        this.bodySprite = scene.add.triangle(0, 0, 10, 0, -10, -10, -10, 10, 0xffffff);
+        // Create Body (Sprite)
+        this.bodySprite = scene.add.sprite(0, 0, 'hero_run_sheet', 0);
+        this.bodySprite.setDisplaySize(32, 32); // Adjust size relative to tile (64)
         this.add(this.bodySprite);
 
         // Create Health Bar
@@ -118,7 +120,10 @@ export class Adventurer extends Phaser.GameObjects.Container {
         if (this.isJumping) return { reachedEnd: false, enteredNewTile: false };
 
         // Returns true if reached end
-        if (this.path.length <= 1) return { reachedEnd: true, enteredNewTile: false };
+        if (this.path.length <= 1) {
+            this.bodySprite.stop(); // Stop animation at end
+            return { reachedEnd: true, enteredNewTile: false };
+        }
 
         // Handle Pause
         if (this.pauseTimer > 0) {
@@ -128,7 +133,9 @@ export class Adventurer extends Phaser.GameObjects.Container {
                 this.progress -= 1;
                 this.path.shift();
             } else {
-                // Still paused
+                // Still paused - idle/stop animation
+                this.bodySprite.stop();
+                // Optionally play 'idle' if available
                 return { reachedEnd: false, enteredNewTile: false };
             }
         }
@@ -145,6 +152,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
             this.x = nextWorld.x;
             this.y = nextWorld.y;
 
+            this.bodySprite.stop(); // Stop animation during pause
+
             // We just arrived at the center of the new tile. Trigger trap now!
             console.log(`Adventurer ${this.id} entered new tile: ${nextTile.x}, ${nextTile.y}`);
             return { reachedEnd: false, enteredNewTile: true };
@@ -160,9 +169,29 @@ export class Adventurer extends Phaser.GameObjects.Container {
             this.x = Phaser.Math.Linear(currentWorld.x, nextWorld.x, this.progress);
             this.y = Phaser.Math.Linear(currentWorld.y, nextWorld.y, this.progress);
 
-            // Update Rotation
+            // Update Animation Direction
             const angle = Phaser.Math.Angle.Between(currentWorld.x, currentWorld.y, nextWorld.x, nextWorld.y);
-            this.bodySprite.rotation = angle;
+
+            // Radian to localized direction
+            // 0 = Right, PI/2 = Down, PI = Left, -PI/2 = Up
+            let animKey = 'run-down';
+            let flipX = false;
+
+            // Simple 4-way direction check
+            if (Math.abs(angle) < Math.PI / 4) {
+                animKey = 'run-right';
+                flipX = false;
+            } else if (Math.abs(angle) > 3 * Math.PI / 4) {
+                animKey = 'run-right'; // Re-use right for left with flip
+                flipX = true;
+            } else if (angle > 0) {
+                animKey = 'run-down';
+            } else {
+                animKey = 'run-up';
+            }
+
+            this.bodySprite.setFlipX(flipX);
+            this.bodySprite.play(animKey, true); // true = ignoreIfPlaying
         }
 
         return { reachedEnd: false, enteredNewTile: false };
@@ -180,9 +209,15 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public jumpTo(targetX: number, targetY: number, duration: number, onComplete: () => void) {
         this.isJumping = true;
 
-        // Face the target
-        const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY);
-        this.bodySprite.rotation = angle;
+        // Face the target (Simplified: Just flip if moving left)
+        if (targetX < this.x) {
+            this.bodySprite.setFlipX(true);
+            this.bodySprite.play('run-right', true);
+        } else if (targetX > this.x) {
+            this.bodySprite.setFlipX(false);
+            this.bodySprite.play('run-right', true);
+        }
+        // If mostly vertical, maybe use up/down? Keeping simple.
 
         // Position Tween
         this.scene.tweens.add({
@@ -200,7 +235,15 @@ export class Adventurer extends Phaser.GameObjects.Container {
         // Scale Tween (Simulate height)
         this.scene.tweens.add({
             targets: this.bodySprite,
-            scale: 1.5,
+            scale: 1.5, // Logic scale? Original display size was manual. 
+            // Wait, I setDisplaySize(32,32). Tweening 'scale' might be relative to that?
+            // Phaser scale property affects display size.
+            // I'll tween 'y' offset instead to simulating jumping height, 
+            // because tweening scale on a sprite might look weird if not configured right.
+            // Actually, previous code tweened scale to 1.5. 
+            // If I used setDisplaySize, 'scale' is derived.
+            // I will tween 'y' of the bodySprite relative to container.
+            y: -30, // Jump UP relative to container
             duration: duration / 2,
             yoyo: true,
             ease: 'Sine.easeOut'

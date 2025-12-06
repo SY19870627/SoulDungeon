@@ -4,6 +4,62 @@
 
 **核心體驗**：像推骨牌一樣設計連鎖反應，利用貪婪與個性操控冒險者，享受「請君入甕」的快感。
 
+## 0. 當前開發重點：美術素材與動畫實作 (Current Focus: Graphics & Animation)
+
+根據工作討論結果，優先執行以下繪圖與動畫重構任務：
+
+### 1. 素材準備與匯入 (Assets Preparation)
+- [ ] **下載素材**：下載 Kenney Tiny Dungeon 素材包（或是類似的 16x16 / 32x32 像素地城素材）。
+- [ ] **檔案配置**：
+    - 將素材解壓縮至專案的 `public/assets/` 資料夾。
+    - 確保有以下關鍵圖片：
+        - `hero_run_sheet.png` (角色的行走動畫圖集)
+        - `floor.png` (地磚)
+        - `wall.png` (牆壁)
+        - `trap_spike.png` (尖刺陷阱)
+        - `trap_spring.png` (彈簧)
+        - 其他化學元素圖示 (油、火、雷、水、毒、風扇)。
+
+### 2. 主場景設定 (MainScene.ts)
+- [ ] **預載資源 (Preload)**：
+    - 在 `MainScene` 中新增 `preload()` 方法。
+    - 使用 `this.load.image()` 載入靜態圖片（地磚、牆壁、陷阱）。
+    - 使用 `this.load.spritesheet()` 載入角色動畫圖集（設定正確的 frameWidth 和 frameHeight）。
+- [ ] **建立動畫 (Create Animations)**：
+    - 在 `create()` 方法中，使用 `this.anims.create()` 定義角色的行走動畫：
+        - `run-down` (向下走)
+        - `run-right` (向右走)
+        - `run-up` (向上走)
+    - 設定 `repeat: -1` (無限循環) 與適當的 `frameRate` (如 10)。
+
+### 3. 冒險者重構 (Adventurer.ts)
+- [ ] **替換幾何圖形**：
+    - 將 `bodySprite` 的型別從 `Phaser.GameObjects.Triangle` 改為 `Phaser.GameObjects.Sprite`。
+    - 在建構子中，將 `scene.add.triangle` 改為 `scene.add.sprite` 並指定初始 frame。
+- [ ] **實作移動動畫**：
+    - 修改 `move()` 方法，計算移動角度 (`angle`)。
+    - 根據角度判斷方向 (上/下/左/右)。
+    - 向左處理：使用 `run-right` 動畫並設定 `setFlipX(true)`。
+    - 播放邏輯：使用 `this.bodySprite.play('anim-key', true)` 確保動畫流暢不重置。
+- [ ] **處理閒置狀態**：
+    - 在 `move()` 的暫停邏輯 (`pauseTimer > 0`) 中，呼叫 `this.bodySprite.stop()` 或播放 idle 動畫，避免原地踏步。
+
+### 4. 陷阱渲染重構 (Trap Rendering)
+- [ ] **移除幾何重繪**：
+    - 移除 `MainScene.ts` 中 `refresh()` 裡面的 `drawTraps()` 幾何繪圖邏輯。
+- [ ] **改用 Sprite 管理**：
+    - 在 `GridSystem` 或 `MainScene` 中建立一個 `Phaser.GameObjects.Group` 來管理陷阱 Sprite。
+    - 當放置陷阱 (`placeTrap`) 時：建立 Sprite，設定對應的 Texture Key，並根據 direction 設定 angle (0, 90, 180, 270)。
+    - 當移除陷阱 (`removeTrap`) 時：銷毀對應的 Sprite。
+
+### 5. 顯示優化 (Optional but Recommended)
+- [ ] **像素完美 (Pixel Art)**：
+    - 在 `src/game/main.ts` 的 `GameConfig` 中，確認設定 `pixelArt: true` (或 `antialias: false`) 以防止像素圖變模糊。
+- [ ] **圖層順序 (Depth Sorting)**：
+    - 確保 `Adventurer` 的 depth 高於 `Trap` 和 `Floor`，避免角色被地圖蓋住。
+
+---
+
 ## 1. 遊戲概述 (Overview)
 
 玩家扮演一位「地城經營者」，但不同於傳統遊戲依靠強大的怪物硬碰硬，本作的核心在於**「動線設計」與「心理操控」**。
