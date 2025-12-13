@@ -146,6 +146,10 @@ export class MainScene extends Phaser.Scene {
         this.highlightGraphics.fillRect(origin.x, origin.y, tileSize, tileSize);
     }
 
+    public animateTrapTrigger(gridX: number, gridY: number) {
+        this.dungeonRenderer.animateTrapTrigger(gridX, gridY);
+    }
+
     // ---------------------------
 
     private setupEvents() {

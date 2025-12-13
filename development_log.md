@@ -205,3 +205,8 @@
 - **Behavior**: Instead of just stopping, Adventurer now physically steps 40% into the dangerous tile, creates a "😨" emote, recoils back to origin, and then reroutes.
 - **State Management**: Added `isPanicAnimating` flag to prevent movement logic conflicts during the probe animation.
 - **Psychology**: Reinforces the "Smart Mouse" feel where adventurers visibly test the waters before panicking.
+
+### 24. Visual Polish - Spring Trap Animation
+- **Feature**: Added "Boing" animation for Spring Traps.
+- **Visuals**: Trap sprite scales (1.0 -> 1.5 -> 1.0) using a `Back.out` ease when an Adventurer lands on it.
+- **Sync**: Animation triggers exactly on `enteredNewTile` event, providing immediate visual feedback for the physics interaction.

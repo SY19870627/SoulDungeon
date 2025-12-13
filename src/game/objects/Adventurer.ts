@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
-// import { MainScene } from '../scenes/MainScene'; // Removed to avoid circular dep if MainScene not used elsewhere?
-// Actually MainScene might be used for type? "scene: Phaser.Scene" is used.
+import type { MainScene } from '../scenes/MainScene';
 import { HealthBar } from '../components/HealthBar';
 import { StaminaBar } from '../components/StaminaBar';
 import { EmoteBubble } from '../components/EmoteBubble';
@@ -243,9 +242,19 @@ export class Adventurer extends Phaser.GameObjects.Container {
             }
         }
 
-        // 1. Handle Arrival State (Trigger Trap)
         if (this.justArrived) {
             this.justArrived = false;
+
+            // Trigger Visual Animation for Spring Trap
+            const gridPos = gridSystem.worldToGrid(this.x, this.y);
+            if (gridPos) {
+                const trap = gridSystem.getCell(gridPos.x, gridPos.y)?.trap;
+                if (trap && (trap.config.id === 'spring' || trap.type === 'physics')) {
+                    // Trigger "Boing"
+                    (this.scene as MainScene).animateTrapTrigger(gridPos.x, gridPos.y);
+                }
+            }
+
             // Pause timer is already set by tween complete
             return { reachedEnd: false, enteredNewTile: true };
         }

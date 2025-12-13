@@ -151,4 +151,23 @@ export class DungeonRenderer {
         this.drawWalls();
         this.syncTrapSprites();
     }
+
+    public animateTrapTrigger(gridX: number, gridY: number): void {
+        const key = `${gridX},${gridY}`;
+        const sprite = this.trapSprites.get(key);
+        if (sprite) {
+            this.scene.tweens.add({
+                targets: sprite,
+                scale: 1.5, // Relative directly? Or absolute? SetDisplaySize sets scale based on texture. 
+                // Since we use setDisplaySize(tileSize, tileSize), the scale might be !1.
+                // To be safe, let's use a scale multiplier or just hard punch it.
+                // Better: scaleX/scaleY relative to current.
+                scaleX: sprite.scaleX * 1.5,
+                scaleY: sprite.scaleY * 1.5,
+                duration: 150,
+                yoyo: true,
+                ease: 'Back.out'
+            });
+        }
+    }
 }
