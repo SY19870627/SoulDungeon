@@ -56,11 +56,7 @@ export class WaveManager {
     }
 
     private spawnAdventurer() {
-        const path = this.pathfinding.findPath(this.startPos, this.endPos);
-        if (path.length === 0) {
-            console.warn('No path for adventurer!');
-            return;
-        }
+        // Removed initial pathfinding. Adventurer decides their own path.
 
         const startWorld = this.gridSystem.gridToWorld(this.startPos.x, this.startPos.y);
 
@@ -68,9 +64,8 @@ export class WaveManager {
             id: Math.random().toString(36).substr(2, 9),
             hp: 100,
             maxHp: 100,
-            speed: 2,
-            path: path
-        });
+            speed: 2
+        }, this.gridSystem, this.pathfinding);
 
         this.adventurers.push(adventurer);
         console.log('Spawned adventurer:', adventurer.id);
@@ -85,7 +80,23 @@ export class WaveManager {
         for (let i = this.adventurers.length - 1; i >= 0; i--) {
             const adv = this.adventurers[i];
 
-            // Check death
+            // Cleanup if destroyed (Expired or Killed)
+            if (!adv.scene || adv.isDying) {
+                // If marked dying, wait for it to be destroyed? 
+                // Actually adv.die() plays animation then calls onComplete.
+                // adv.expire() plays animation then calls destroy().
+                // If destroy() is called, Phaser removes it from display list.
+                // We need to remove it from our list too if it's null/destroyed.
+                // But wait, `adv` object still exists unless we splice it.
+                // Phaser GameObjects checks: if (!adv.active)
+            }
+
+            if (!adv.active) {
+                this.adventurers.splice(i, 1);
+                continue;
+            }
+
+            // Check death (HP <= 0)
             if (adv.hp <= 0) {
                 if (!adv.isDying) {
                     adv.die(() => this.killAdventurer(adv));
@@ -98,11 +109,9 @@ export class WaveManager {
 
             const { reachedEnd, enteredNewTile } = adv.move(dt, this.gridSystem);
 
-            if (reachedEnd) {
-                this.removeAdventurer(i);
-                console.log('Adventurer reached treasure!');
-                continue;
-            }
+            // reachedEnd is now purely internal to path segment. 
+            // Adventurer decidesNextPath automatically.
+            // If adventurer runs out of stamina, they call expire() -> isDying -> destoy.
 
             // Check traps only if entered new tile
             if (enteredNewTile) {
@@ -126,7 +135,7 @@ export class WaveManager {
             if (this.economyManager) {
                 this.economyManager.addGold(10);
             }
-            console.log('Adventurer died!');
+            console.log('Adventurer died (Killed)! Gold Awarded.');
         }
     }
 

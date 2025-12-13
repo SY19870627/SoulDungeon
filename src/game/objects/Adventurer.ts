@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 // import { MainScene } from '../scenes/MainScene'; // Removed to avoid circular dep if MainScene not used elsewhere?
 // Actually MainScene might be used for type? "scene: Phaser.Scene" is used.
 import { HealthBar } from '../components/HealthBar';
+import { StaminaBar } from '../components/StaminaBar';
 import { EmoteBubble } from '../components/EmoteBubble';
 import { DungeonRenderer } from '../systems/DungeonRenderer';
 import { GridSystem } from '../systems/GridSystem';
@@ -12,7 +13,6 @@ export interface AdventurerConfig {
     hp: number;
     maxHp: number;
     speed: number;
-    path: { x: number, y: number }[];
 }
 
 export class Adventurer extends Phaser.GameObjects.Container {
@@ -20,50 +20,77 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public hp: number;
     public maxHp: number;
     public speed: number;
-    public path: { x: number, y: number }[];
+    public path: { x: number, y: number }[] = [];
     public progress: number = 0;
     public isJumping: boolean = false;
     public isMoving: boolean = false;
+    public isDying: boolean = false;
+
+    // Stamina & Roaming
+    public stamina: number = 40;
+    public maxStamina: number = 40;
+    private visitedTiles: Set<string> = new Set();
+    private gridSystem: GridSystem;
+    private pathfinding: Pathfinding;
+
     private justArrived: boolean = false;
     private stepCount: number = 0;
     private memory: Map<string, { type: string, detail: string, timestamp: number }> = new Map();
-    private target: { x: number, y: number };
+    private target: { x: number, y: number } | null = null;
 
     // Pause Logic
     private pauseTimer: number = 0;
     private readonly PAUSE_DURATION: number = 0.5; // 0.5 seconds pause
 
+    // Panic Logic
+    private isPanic: boolean = false;
+    private panicTimer: number = 0;
+
     // Visuals
     private bodySprite: Phaser.GameObjects.Sprite;
     private healthBar: HealthBar;
+    private staminaBar: StaminaBar;
     private emoteBubble: EmoteBubble;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, config: AdventurerConfig) {
+    constructor(scene: Phaser.Scene, x: number, y: number, config: AdventurerConfig, gridSystem: GridSystem, pathfinding: Pathfinding) {
         super(scene, x, y);
         this.scene.add.existing(this);
         this.setDepth(DungeonRenderer.DEPTH_ADVENTURER);
 
+        // ... (Properties Init unchanged)
         this.id = config.id;
         this.hp = config.hp;
         this.maxHp = config.maxHp;
         this.speed = config.speed;
-        this.speed = config.speed;
-        this.path = config.path;
-        this.target = this.path[this.path.length - 1];
 
+        this.gridSystem = gridSystem;
+        this.pathfinding = pathfinding;
+
+        // Initialize Visited
+        const startGrid = this.gridSystem.worldToGrid(x, y);
+        if (startGrid) {
+            this.visitedTiles.add(`${startGrid.x},${startGrid.y}`);
+        }
 
         // Create Body (Sprite)
         this.bodySprite = scene.add.sprite(0, 0, 'hero');
-        this.bodySprite.setDisplaySize(32, 32); // Adjust size relative to tile (64)
+        this.bodySprite.setDisplaySize(32, 32);
         this.add(this.bodySprite);
 
-        // Create Health Bar
-        this.healthBar = new HealthBar(scene, 0, -25);
+        // Create Health Bar (Green, Top)
+        this.healthBar = new HealthBar(scene, 0, -28);
         this.add(this.healthBar);
 
-        // Create Emote Bubble
-        this.emoteBubble = new EmoteBubble(scene, 0, -45);
+        // Create Stamina Bar (Blue, Below Health)
+        this.staminaBar = new StaminaBar(scene, 0, -20);
+        this.add(this.staminaBar);
+
+        // Create Emote Bubble (Higher up)
+        this.emoteBubble = new EmoteBubble(scene, 0, -50);
         this.add(this.emoteBubble);
+
+        // Initial Decision
+        this.decideNextPath();
     }
 
     public showEmote(emoji: string, duration: number = 1000) {
@@ -96,50 +123,43 @@ export class Adventurer extends Phaser.GameObjects.Container {
     }
 
     public recalculatePath(gridSystem: GridSystem, pathfinding: Pathfinding) {
-        if (!this.target) return;
+        this.decideNextPath();
+    }
 
-        // Current position in grid
-        const currentGrid = gridSystem.worldToGrid(this.x, this.y);
-        if (!currentGrid) return; // Off grid?
+    private decideNextPath() {
+        if (this.isDying) return;
 
-        // Recalculate
-        // Recalculate
-        console.log(`[Adventurer ${this.id}] Recalculating path using Semantic Memory. Size: ${this.memory.size}`);
+        const currentGrid = this.gridSystem.worldToGrid(this.x, this.y);
+        if (!currentGrid) return;
 
-        const newPath = pathfinding.findPath(
-            currentGrid,
-            this.target,
-            this.memory
-        );
+        const target = this.pathfinding.findNearestWalkableTile(currentGrid, this.visitedTiles);
 
-        if (newPath.length > 0) {
-            console.log(`Adventurer ${this.id} recalculated path. Length: ${newPath.length}`);
-            this.path = newPath;
-            // Since we are likely in the middle of a tile or moving, we need to handle the current movement.
-            // But for now, we just update the path property, which is used in `move()`.
-            // Note: `move` relies on `path[0]` being the next tile.
-            // `findPath` usually returns [start, ... nodes]. If start is current tile, we might need to shift it?
-            // Existing logic: findPath returns [start, next, ...]
-            // Adventurer.move assumes path[0] is strictly the NEXT tile?
-            // Let's check existing implementation.
-            // In WaveManager or Pathfinding logic, findPath typically includes the start node.
-            // Adventurer logic: `const currentTile = this.path[0]; const nextTile = this.path[1];`
-            // and `this.scene.tweens.add... x: nextWorld... onComplete: path.shift()`
-            // So path[0] is treated as "current/start of segment".
-            // So if we set `this.path = newPath`, and `newPath[0]` is our current grid pos, it should be fine.
+        if (target) {
+            // 2. Path to it
+            const newPath = this.pathfinding.findPath(
+                currentGrid,
+                target,
+                this.memory
+            );
+
+            if (newPath.length > 0) {
+                this.path = newPath;
+                this.isPanic = false;
+            } else {
+                console.log(`Adventurer ${this.id} target unreachable.`);
+                this.enterPanic();
+            }
         } else {
-            console.log(`Adventurer ${this.id} panic! No path found!`);
-            // Panic behavior: Try to exit or just die?
-            // Prompt says: "Switch state to EXITING (try to find path back to spawn). If still no path, destroy self."
-            // We'll implement a simple destroy for now or just set flag.
-            // Let's destroy for now to satisfy "If still no path, destroy self" (assuming spawn path also blocked).
-            // Or we can try to find path to (0,0) or similar.
-            // But let's stick to prompt: "If no path is found (the "Mouse" is trapped): Switch state to EXITING... If still no path, destroy."
+            console.log(`Adventurer ${this.id} explored everything or trapped.`);
+            this.enterPanic();
+        }
+    }
 
-            // Try path back to start (0,0) or startPos if stored.
-            // We don't have startPos stored. Assume 0,0? Or just Despawn.
-            this.showEmote('☠️');
-            this.die(() => this.destroy());
+    private enterPanic() {
+        if (!this.isPanic) {
+            this.isPanic = true;
+            this.showEmote('😰');
+            console.log(`Adventurer ${this.id} entering PANIC mode.`);
         }
     }
 
@@ -157,7 +177,20 @@ export class Adventurer extends Phaser.GameObjects.Container {
     }
 
     public move(dt: number, gridSystem: any): { reachedEnd: boolean, enteredNewTile: boolean } {
+        if (this.isDying) return { reachedEnd: false, enteredNewTile: false };
         if (this.isJumping) return { reachedEnd: false, enteredNewTile: false };
+
+        // Panic Burn Logic
+        if (this.isPanic && !this.isMoving) {
+            this.panicTimer += dt;
+            if (this.panicTimer >= 1.0) { // Burn 1 stamina per second
+                this.panicTimer -= 1.0;
+                this.consumeStamina(); // Use consume method to sync UI
+                if (this.stamina <= 0) {
+                    return { reachedEnd: false, enteredNewTile: false };
+                }
+            }
+        }
 
         // 1. Handle Arrival State (Trigger Trap)
         if (this.justArrived) {
@@ -177,88 +210,140 @@ export class Adventurer extends Phaser.GameObjects.Container {
             return { reachedEnd: false, enteredNewTile: false };
         }
 
-        // 4. Check Path End
+        // 4. Check Path End / Need New Path
         if (this.path.length <= 1) {
-            return { reachedEnd: true, enteredNewTile: false };
+            // Reached current target or no path
+            this.decideNextPath();
+
+            // If still no path (Panic), just return
+            if (this.path.length <= 1) {
+                return { reachedEnd: false, enteredNewTile: false };
+            }
         }
 
-        // 5. Start Move (Juice)
+        // 5. Start Move
         const currentTile = this.path[0];
         const nextTile = this.path[1];
 
+        // Ensure we are logically at currentTile
+        // (Sometimes pathfinding includes start node, sometimes not, but we assume path[0] is current)
+
         // Calculate Direction for Flip
-        if (nextTile.x < currentTile.x) {
-            this.bodySprite.setFlipX(true);
-        } else if (nextTile.x > currentTile.x) {
-            this.bodySprite.setFlipX(false);
+        if (nextTile) {
+            if (nextTile.x < currentTile.x) {
+                this.bodySprite.setFlipX(true);
+            } else if (nextTile.x > currentTile.x) {
+                this.bodySprite.setFlipX(false);
+            }
+
+            const nextWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
+
+            this.isMoving = true;
+            this.stepCount++;
+
+            // Position Tween
+            this.scene.tweens.add({
+                targets: this,
+                x: nextWorld.x,
+                y: nextWorld.y,
+                duration: 300, // Fixed time for snappy move
+                ease: 'Linear',
+                onComplete: () => {
+                    this.path.shift();
+                    this.isMoving = false;
+                    this.justArrived = true;
+                    this.pauseTimer = this.PAUSE_DURATION;
+
+                    // Consume Stamina
+                    this.consumeStamina();
+
+                    // Track Visit
+                    this.visitedTiles.add(`${nextTile.x},${nextTile.y}`);
+                }
+            });
+
+            // Juice: Squash & Stretch
+            this.scene.tweens.add({
+                targets: this.bodySprite,
+                scaleX: 1.2,
+                scaleY: 0.8,
+                duration: 100,
+                yoyo: true,
+                ease: 'Sine.easeInOut'
+            });
+
+            // Juice: Rotation Wobble
+            const wobble = (this.stepCount % 2 === 0) ? 5 : -5;
+            this.scene.tweens.add({
+                targets: this.bodySprite,
+                angle: wobble,
+                duration: 150,
+                yoyo: true,
+                ease: 'Sine.easeInOut'
+            });
         }
 
-        const nextWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
+        return { reachedEnd: false, enteredNewTile: false };
+    }
 
-        this.isMoving = true;
-        this.stepCount++;
+    private consumeStamina() {
+        this.stamina -= 1;
+        this.updateStaminaBar();
 
-        // Position Tween
+        if (this.stamina <= 0) {
+            this.expire();
+        }
+    }
+
+    private updateStaminaBar() {
+        const percent = Math.max(0, this.stamina / this.maxStamina);
+        this.staminaBar.updateStamina(percent);
+    }
+
+
+    public expire() {
+        if (this.isDying) return;
+        console.log(`Adventurer ${this.id} EXHAUSTED/EXPIRED (0 Gold).`);
+        this.isDying = true;
+        this.showEmote('💤');
+
+        // Fade out
         this.scene.tweens.add({
             targets: this,
-            x: nextWorld.x,
-            y: nextWorld.y,
-            duration: 300, // Fixed time for snappy move
-            ease: 'Linear',
+            alpha: 0,
+            duration: 1000,
             onComplete: () => {
-                this.path.shift();
-                this.isMoving = false;
-                this.justArrived = true;
-                this.pauseTimer = this.PAUSE_DURATION;
+                this.destroy(); // Just destroy, no callback
             }
         });
-
-        // Juice: Squash & Stretch
-        // Scale scaleY to 0.8 and scaleX to 1.2 (squash) for 100ms, then yoyo back to 1.
-        this.scene.tweens.add({
-            targets: this.bodySprite,
-            scaleX: 1.2,
-            scaleY: 0.8,
-            duration: 100,
-            yoyo: true,
-            ease: 'Sine.easeInOut'
-        });
-
-        // Juice: Rotation Wobble
-        // Rotate between -5 and 5 degrees
-        const wobble = (this.stepCount % 2 === 0) ? 5 : -5;
-        this.scene.tweens.add({
-            targets: this.bodySprite,
-            angle: wobble,
-            duration: 150,
-            yoyo: true,
-            ease: 'Sine.easeInOut'
-        });
-
-        return { reachedEnd: false, enteredNewTile: false };
     }
 
     public teleport(x: number, y: number, newPath: { x: number, y: number }[]) {
         this.x = x;
         this.y = y;
-        this.path = newPath;
+        this.path = newPath; // Usually empty, will decideNextPath
         this.progress = 0;
-        this.pauseTimer = 0; // Critical: Reset pause timer
-        console.log(`Adventurer ${this.id} teleported to ${x}, ${y}. Pause timer reset.`);
+        this.pauseTimer = 0;
+
+        // Update visited for new location
+        const gridPos = this.gridSystem.worldToGrid(x, y);
+        if (gridPos) {
+            this.visitedTiles.add(`${gridPos.x},${gridPos.y}`);
+        }
+
+        console.log(`Adventurer ${this.id} teleported to ${x}, ${y}.`);
+        this.decideNextPath();
     }
 
     public jumpTo(targetX: number, targetY: number, duration: number, onComplete: () => void) {
         this.isJumping = true;
 
-        // Face the target (Simplified: Just flip if moving left)
         if (targetX < this.x) {
             this.bodySprite.setFlipX(true);
         } else if (targetX > this.x) {
             this.bodySprite.setFlipX(false);
         }
-        // If mostly vertical, maybe use up/down? Keeping simple.
 
-        // Position Tween
         this.scene.tweens.add({
             targets: this,
             x: targetX,
@@ -271,17 +356,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
             }
         });
 
-        // Scale Tween (Simulate height)
         this.scene.tweens.add({
             targets: this.bodySprite,
-            scale: 1.5, // Logic scale? Original display size was manual. 
-            // Wait, I setDisplaySize(32,32). Tweening 'scale' might be relative to that?
-            // Phaser scale property affects display size.
-            // I'll tween 'y' offset instead to simulating jumping height, 
-            // because tweening scale on a sprite might look weird if not configured right.
-            // Actually, previous code tweened scale to 1.5. 
-            // If I used setDisplaySize, 'scale' is derived.
-            // I will tween 'y' of the bodySprite relative to container.
             y: -40, // Higher jump for spring
             duration: duration / 2,
             yoyo: true,
@@ -298,7 +374,6 @@ export class Adventurer extends Phaser.GameObjects.Container {
             const offsetX = Math.cos(angle) * lungeDist;
             const offsetY = Math.sin(angle) * lungeDist;
 
-            // Lunge (Tween bodySprite to keep container fixed)
             this.scene.tweens.add({
                 targets: this.bodySprite,
                 x: offsetX,
@@ -315,11 +390,9 @@ export class Adventurer extends Phaser.GameObjects.Container {
     }
 
     public playDamageAnimation() {
-        // Flash Red
         this.bodySprite.setTint(0xff0000);
         this.scene.time.delayedCall(200, () => this.bodySprite.clearTint());
 
-        // Shake
         this.scene.tweens.add({
             targets: this.bodySprite,
             x: { from: -5, to: 5 },
@@ -345,10 +418,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     }
 
     public die(onComplete: () => void) {
+        // This is called when HP <= 0. Triggers Gold Reward via callback.
         this.playDeathAnimation(onComplete);
     }
-
-    public isDying: boolean = false;
-
-
 }

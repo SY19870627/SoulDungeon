@@ -173,4 +173,40 @@ export class Pathfinding {
         }
         return path.reverse();
     }
+
+    public findNearestWalkableTile(start: Point, visited: Set<string>): Point | null {
+        const queue: Point[] = [start];
+        const checked = new Set<string>();
+        checked.add(`${start.x},${start.y}`);
+
+        while (queue.length > 0) {
+            const current = queue.shift()!;
+            const key = `${current.x},${current.y}`;
+
+            // If this tile is walkable and NOT visited (and not the start itself, strictly speaking, 
+            // but if start is already visited it won't trigger unless we handle start separately.
+            // Assuming 'visited' includes current position if we just stepped there.
+            // We want to find a target to GO TO.
+            if (!visited.has(key) && this.gridSystem.isWalkable(current.x, current.y)) {
+                return current;
+            }
+
+            const neighbors = this.getNeighbors(current);
+            for (const neighbor of neighbors) {
+                const nKey = `${neighbor.x},${neighbor.y}`;
+                if (!checked.has(nKey)) {
+                    checked.add(nKey);
+                    // Only add to queue if walkable? 
+                    // BFS for "nearest unvisited" implies we traverse the grid.
+                    // If walls block us, we shouldn't pass through them.
+                    // So yes, isWalkable check is needed for traversal too.
+                    if (this.gridSystem.isWalkable(neighbor.x, neighbor.y)) {
+                        queue.push(neighbor);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
 }

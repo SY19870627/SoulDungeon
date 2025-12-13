@@ -175,3 +175,11 @@
 
 
 
+### 20. Stamina & Roaming System (Time Attack Pivot)
+- **Pivot**: Changed gameplay from "Fixed Path Defense" to "Survival Hunt".
+- **Stamina**: Adventurers start with 40 Stamina. Moving consumes 1 Stamina/tile.
+- **Roaming Logic (BFS)**: implemented `pathfinding.findNearestWalkableTile` for "Greedy Coverage" exploration.
+- **Economic Consequence**: 
+    - **Expire (Stamina=0)**: Adventurer fades out. Reward: **0 Gold**.
+    - **Kill (HP=0)**: Adventurer dies. Reward: **+10 Gold**.
+- **Panic Mode**: If trapped, adventurers enter "Panic" state and burn 1 Stamina/sec to prevent keeping them alive indefinitely.
