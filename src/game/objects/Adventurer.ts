@@ -80,15 +80,15 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
         // Create Body (Sprite)
         this.bodySprite = scene.add.sprite(0, 0, 'hero');
-        this.bodySprite.setDisplaySize(32, 32);
+        this.bodySprite.setDisplaySize(64, 64);
         this.add(this.bodySprite);
 
-        // Create Health Bar (Green, Top)
-        this.healthBar = new HealthBar(scene, 0, -28);
+        // Create Health Bar (Green, Below)
+        this.healthBar = new HealthBar(scene, 0, 22);
         this.add(this.healthBar);
 
         // Create Stamina Bar (Blue, Below Health)
-        this.staminaBar = new StaminaBar(scene, 0, -20);
+        this.staminaBar = new StaminaBar(scene, 0, 30);
         this.add(this.staminaBar);
 
         // Create Emote Bubble (Higher up)
@@ -427,14 +427,13 @@ export class Adventurer extends Phaser.GameObjects.Container {
                 }
             });
 
-            // Juice: Squash & Stretch
+            // Juice: Hop
             this.scene.tweens.add({
                 targets: this.bodySprite,
-                scaleX: 1.2,
-                scaleY: 0.8,
-                duration: 100,
+                y: -20,
+                duration: 150,
                 yoyo: true,
-                ease: 'Sine.easeInOut'
+                ease: 'Sine.easeOut'
             });
 
             // Juice: Rotation Wobble

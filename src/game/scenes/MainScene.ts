@@ -53,7 +53,7 @@ export class MainScene extends Phaser.Scene {
         this.load.image('fan', 'assets/fan.png');
 
         // Hero Static Asset
-        this.load.image('hero', 'assets/hero.png');
+        this.load.image('hero', 'assets/Adventurer_Male_LV1.png');
         this.load.image('entrance', 'assets/entrance.png'); // New Entrance Asset
     }
 

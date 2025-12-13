@@ -241,3 +241,24 @@
 - **Update**: Refined Spring Trap animation logic.
 - **Details**: Uses `killTweensOf` to prevent stacking, and ensures scaling is relative to current size (1.5x) with proper reset on complete.
 - **Goal**: Improved visual responsiveness for rapid trap triggers.
+
+### 31. Visual Update - Adventurer Sprite Replacement
+- **Change**: Replaced the placeholder `hero.png` with `Adventurer_Male_LV1.png`.
+- **Reason**: Upgrading character visuals to a more detailed sprite.
+
+### 32. Bug Fix - Adventurer Movement Scaling
+- **Issue**: Adventurer sprite size exploded during movement due to hardcoded absolute scale in squash & stretch tween.
+- **Fix**: Updated `Adventurer.ts` to use relative scaling (`currentScale * factor`) for the move animation.
+
+### 33. Visual Tweak - Adventurer Size
+- **Change**: Increased Adventurer sprite size from 32x32 to 64x64.
+- **Reason**: Improved visibility and presence on the 64x64 grid.
+
+### 34. UI Layout Update - Status Bars
+- **Change**: Moved Health and Stamina bars from above the character to below the character.
+- **Reason**: Better visual composition with the larger character sprite.
+
+### 35. Visual Update - Movement Animation
+- **Change**: Replaced specific "Squash & Stretch" scaling with a "Hop" (Y-axis transition) animation for movement.
+- **Reason**: Previous scaling effect was too subtle; hopping provides clearer visual feedback for step-by-step movement.
+
