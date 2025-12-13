@@ -119,6 +119,8 @@ export class DungeonRenderer {
                         const origin = this.gridSystem.getGridOrigin(x, y);
                         sprite = this.scene.add.sprite(origin.x + tileSize / 2, origin.y + tileSize / 2, textureKey);
                         sprite.setDisplaySize(tileSize, tileSize);
+                        sprite.setData('baseScaleX', sprite.scaleX);
+                        sprite.setData('baseScaleY', sprite.scaleY);
                         this.trapGroup.add(sprite);
                         this.trapSprites.set(key, sprite);
                     } else {
@@ -159,15 +161,27 @@ export class DungeonRenderer {
         const key = `${gridX},${gridY}`;
         const sprite = this.trapSprites.get(key);
         if (sprite) {
+            this.scene.tweens.killTweensOf(sprite); // Stop existing animations
+
+            // Use stored base scale if available, otherwise fallback (safer init)
+            let baseX = sprite.getData('baseScaleX');
+            let baseY = sprite.getData('baseScaleY');
+
+            if (baseX === undefined || baseY === undefined) {
+                baseX = sprite.scaleX;
+                baseY = sprite.scaleY;
+                sprite.setData('baseScaleX', baseX);
+                sprite.setData('baseScaleY', baseY);
+            }
+
+            // Force reset to base scale to ensure clean start
+            sprite.setScale(baseX, baseY);
+
             this.scene.tweens.add({
                 targets: sprite,
-                scale: 1.5, // Relative directly? Or absolute? SetDisplaySize sets scale based on texture. 
-                // Since we use setDisplaySize(tileSize, tileSize), the scale might be !1.
-                // To be safe, let's use a scale multiplier or just hard punch it.
-                // Better: scaleX/scaleY relative to current.
-                scaleX: sprite.scaleX * 1.5,
-                scaleY: sprite.scaleY * 1.5,
-                duration: 150,
+                scaleX: baseX * 1.5,
+                scaleY: baseY * 1.5,
+                duration: 100,
                 yoyo: true,
                 ease: 'Back.out'
             });

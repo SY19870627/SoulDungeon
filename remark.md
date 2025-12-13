@@ -210,6 +210,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
         *   **冒險者**：中陷阱或狀態異常時，頭頂顯示對應心情（如：踩到尖刺顯示痛楚 😖、被彈飛顯示驚恐 😱）。
         *   **怪物/守衛**：偵測到敵人時，頭頂顯示「驚嘆號 ❗」並轉向目標，提供明確的索敵回饋。
     *   **Spring Trap Activation**: The trap sprite plays a 'Boing' animation (Scale pulse: 1.0 -> 1.5 -> 1.0) when triggered.
+    *   **Trap Trigger Animation**: Implemented generic bounce effect (Scale 1.5x) for Spring Traps to clearly indicate activation.
 *   **操作**：
     *   左鍵放置/旋轉。
     *   右鍵移除。

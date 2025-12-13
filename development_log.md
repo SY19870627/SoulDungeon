@@ -236,3 +236,8 @@
 - **Feature**: Implemented JSON Map Loader.
 - **Implementation**: The game now parses `level_01.json` to initialize the grid size, wall layout, and adventurer spawn point. This replaces the empty default grid.
 - **Data Structure**: Standardized JSON format for levels defining `width`, `height`, and ASCII `layout`.
+
+### 30. Visual Polish - Trap Animation Refinement
+- **Update**: Refined Spring Trap animation logic.
+- **Details**: Uses `killTweensOf` to prevent stacking, and ensures scaling is relative to current size (1.5x) with proper reset on complete.
+- **Goal**: Improved visual responsiveness for rapid trap triggers.
