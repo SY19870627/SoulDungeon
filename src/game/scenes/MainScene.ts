@@ -38,6 +38,9 @@ export class MainScene extends Phaser.Scene {
         this.load.image('trap_bear', 'assets/trap_bear.png'); // New
         this.load.image('trap_rune', 'assets/trap_rune.png'); // New
 
+        // Load Level Data
+        this.load.json('level1', 'levels/level_01.json');
+
         // Elements
         this.load.image('oil', 'assets/oil.png');
         this.load.image('fire', 'assets/fire.png');
@@ -56,8 +59,10 @@ export class MainScene extends Phaser.Scene {
 
     create() {
         // Calculate offsets to center the grid
-        const gridWidth = 10;
-        const gridHeight = 10;
+        // Initialize GridSystem from Level Data
+        const levelData = this.cache.json.get('level1');
+        const gridWidth = levelData.width;
+        const gridHeight = levelData.height;
         const tileSize = 64;
 
         const totalWidth = gridWidth * tileSize;
@@ -66,10 +71,25 @@ export class MainScene extends Phaser.Scene {
         const offsetX = (this.scale.width - totalWidth) / 2;
         const offsetY = (this.scale.height - totalHeight) / 2;
 
-        // Initialize GridSystem with calculated offsets
         this.gridSystem = new GridSystem(gridWidth, gridHeight, tileSize, offsetX, offsetY);
+
+        // Parse Layout
+        const layout = levelData.layout;
+        for (let y = 0; y < layout.length; y++) {
+            const row = layout[y];
+            for (let x = 0; x < row.length; x++) {
+                const char = row[x];
+                if (char === 'W') {
+                    this.gridSystem.toggleWall(x, y);
+                } else if (char === 'S') {
+                    this.startPos = { x, y };
+                }
+            }
+        }
+
         this.pathfinding = new Pathfinding(this.gridSystem);
         this.waveManager = new WaveManager(this, this.gridSystem, this.pathfinding);
+        this.waveManager.setSpawnPoint(this.startPos); // New
         this.economyManager = new EconomyManager(500); // Start with 500 gold
         this.waveManager.setEconomyManager(this.economyManager);
 
@@ -93,6 +113,9 @@ export class MainScene extends Phaser.Scene {
         this.time.delayedCall(100, () => {
             window.dispatchEvent(new CustomEvent('gold-updated', { detail: this.economyManager.getGold() }));
         });
+
+        // Initial Refresh to render loaded walls
+        this.refresh();
     }
 
     update(time: number, delta: number) {

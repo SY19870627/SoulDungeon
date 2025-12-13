@@ -169,10 +169,11 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 ### E. 方向與視野 (Direction & Vision)
 所有單位（冒險者、怪物）與特定陷阱皆具有「方向性」，這將影響判定與互動。
 
-*   **方向 (Orientation)**：
-    *   單位與陷阱皆有 4 方向 (上、下、左、右)。
-    *   **背襲判定 (Backstab)**：從冒險者背後（視線死角）發動的攻擊造成額外傷害。
-    *   **陷阱方向**：部分陷阱（如噴火口、彈簧、弩箭）僅對特定方向生效，玩家需透過旋轉來調整。
+*   **核心機制 (Core Mechanics)**：
+    *   **網格系統 (Grid System)**：地圖由正方形網格組成，每個格子可放置一個單位（牆壁、陷阱、裝飾）。
+    *   **路徑搜尋 (Pathfinding)**：冒險者使用 A* 演算法尋找到達終點的最短路徑。玩家需透過放置障礙物來引導（或延長）冒險者的路線。
+    *   **波次生成 (Wave Spawning)**：冒險者以波次 (Wave) 形式出現，每波數量與強度遞增。
+    *   **Map Persistence**: Levels are initialized from JSON files defining grid layout, walls, and spawn points, enabling complex level design.部分陷阱（如噴火口、彈簧、弩箭）僅對特定方向生效，玩家需透過旋轉來調整。
 
 *   **視野 (Field of View - FOV)**：
     *   **錐形視野**：冒險者與怪物擁有前方錐形視野。

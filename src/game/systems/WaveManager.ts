@@ -35,6 +35,10 @@ export class WaveManager {
         this.economyManager = economyManager;
     }
 
+    public setSpawnPoint(point: { x: number, y: number }) {
+        this.startPos = point;
+    }
+
     public startWave() {
         if (this.spawnTimer) {
             this.spawnTimer.remove();

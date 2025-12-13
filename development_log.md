@@ -231,3 +231,8 @@
 - **Visuals**: Fleeing units trigger '😱' emote and are tinted Pale Blue.
 - **Economy**: Killing a fleeing unit yields **Double Gold** (20g). If they escape, the player gets nothing.
 - **Strategy**: Adds a "Mercy Kill" window where high-risk play is rewarded.
+
+### 29. System - Level Loading
+- **Feature**: Implemented JSON Map Loader.
+- **Implementation**: The game now parses `level_01.json` to initialize the grid size, wall layout, and adventurer spawn point. This replaces the empty default grid.
+- **Data Structure**: Standardized JSON format for levels defining `width`, `height`, and ASCII `layout`.

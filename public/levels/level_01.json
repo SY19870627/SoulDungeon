@@ -1,0 +1,18 @@
+{
+    "id": "level_1",
+    "name": "The First Labyrinth",
+    "width": 10,
+    "height": 10,
+    "layout": [
+        "WWWWWWWWWW",
+        "WWWWWWWWWW",
+        "WWWWWWWWWW",
+        "WW...WW...",
+        "...WS...W.",
+        ".W.WWWW.W.",
+        "........W.",
+        "WWWWWWWWWW",
+        "WWWWWWWWWW",
+        "WWWWWWWWWW"
+    ]
+}
