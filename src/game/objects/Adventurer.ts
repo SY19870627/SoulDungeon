@@ -26,8 +26,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public isDying: boolean = false;
 
     // Stamina & Roaming
-    public stamina: number = 40;
-    public maxStamina: number = 40;
+    public stamina: number = 25;
+    public maxStamina: number = 25;
     private visitedTiles: Set<string> = new Set();
     private gridSystem: GridSystem;
     private pathfinding: Pathfinding;

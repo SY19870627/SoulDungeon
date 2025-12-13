@@ -90,7 +90,7 @@ export class MainScene extends Phaser.Scene {
         this.pathfinding = new Pathfinding(this.gridSystem);
         this.waveManager = new WaveManager(this, this.gridSystem, this.pathfinding);
         this.waveManager.setSpawnPoint(this.startPos); // New
-        this.economyManager = new EconomyManager(500); // Start with 500 gold
+        this.economyManager = new EconomyManager(120); // Start with 120 gold
         this.waveManager.setEconomyManager(this.economyManager);
 
         // Initialize Renderer

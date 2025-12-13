@@ -262,3 +262,11 @@
 - **Change**: Replaced specific "Squash & Stretch" scaling with a "Hop" (Y-axis transition) animation for movement.
 - **Reason**: Previous scaling effect was too subtle; hopping provides clearer visual feedback for step-by-step movement.
 
+### 36. Balance Update - Stamina
+- **Change**: Reduced Adventurer base Stamina from 40 to 25.
+- **Reason**: Increasing difficulty/urgency by limiting the free roam duration.
+
+### 37. Balance Update - Economy
+- **Change**: Updated initial gold from 500 to 120.
+- **Reason**: Rebalancing starting resources for tighter gameplay.
+
