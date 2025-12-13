@@ -183,3 +183,11 @@
     - **Expire (Stamina=0)**: Adventurer fades out. Reward: **0 Gold**.
     - **Kill (HP=0)**: Adventurer dies. Reward: **+10 Gold**.
 - **Panic Mode**: If trapped, adventurers enter "Panic" state and burn 1 Stamina/sec to prevent keeping them alive indefinitely.
+
+### 21. Smart Trap Anxiety (AI Enhancement)
+- **Feature**: Implemented "Trap Anxiety". Adventurers panic upon seeing a trap (-5 Stamina, '😨').
+- **Logic**: 
+  - **Detection**: Adventurers check the next tile for traps before moving.
+  - **Memory**: Once detected, the trap is added to `knownTraps`.
+  - **Rerouting**: Updated Pathfinding to support `excludeNodes` (known traps) and `preferredNodes` (visited tiles). AI now prefers retracing steps to find alternate routes rather than risking unknown tiles immediately.
+- **Goal**: Simulation of cautious exploration and fear.

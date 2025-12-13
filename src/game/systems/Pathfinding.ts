@@ -14,6 +14,8 @@ interface Node {
     parent: Node | null;
 }
 
+
+
 export class Pathfinding {
     private gridSystem: GridSystem;
 
@@ -24,19 +26,16 @@ export class Pathfinding {
     public findPath(
         start: Point,
         end: Point,
-        memoryContext?: Map<string, { type: string, detail: string }> | string[],
-        getTileCost?: (x: number, y: number) => number
+        excludeNodes?: Set<string>,
+        preferredNodes?: Set<string>
     ): Point[] {
-        const memorySize = memoryContext instanceof Map ? memoryContext.size : (Array.isArray(memoryContext) ? memoryContext.length : 0);
-        // console.log(`[Pathfinding] findPath from ${start.x},${start.y} to ${end.x},${end.y}. MemoryKeys: ${memorySize}`);
-
         if (!this.gridSystem.isWalkable(start.x, start.y) || !this.gridSystem.isWalkable(end.x, end.y)) {
-            // console.log(`[Pathfinding] Start or End unwalkable`);
             return [];
         }
 
         const openSet: Node[] = [];
         const closedSet: Set<string> = new Set();
+        const openSetMap: Map<string, Node> = new Map(); // Optimization to lookup nodes in openSet
 
         const startNode: Node = {
             x: start.x,
@@ -49,9 +48,12 @@ export class Pathfinding {
         startNode.f = startNode.g + startNode.h;
 
         openSet.push(startNode);
+        openSetMap.set(`${start.x},${start.y}`, startNode);
 
         while (openSet.length > 0) {
             // Find node with lowest f score
+            // For better performance in large grids, a PriorityQueue should be used.
+            // For now, simple array search is okay for small grids.
             let currentIndex = 0;
             for (let i = 1; i < openSet.length; i++) {
                 if (openSet[i].f < openSet[currentIndex].f) {
@@ -68,54 +70,37 @@ export class Pathfinding {
 
             // Move current from open to closed
             openSet.splice(currentIndex, 1);
-            closedSet.add(`${currentNode.x},${currentNode.y}`);
+            const currentKey = `${currentNode.x},${currentNode.y}`;
+            openSetMap.delete(currentKey);
+            closedSet.add(currentKey);
 
             // Check neighbors
             const neighbors = this.getNeighbors(currentNode);
             for (const neighborPos of neighbors) {
                 const neighborKey = `${neighborPos.x},${neighborPos.y}`;
+
                 if (closedSet.has(neighborKey)) {
                     continue;
                 }
 
-                // 1. Check Custom Cost (Deterministic Rules)
-                let moveCost = 1;
-                if (getTileCost) {
-                    const cost = getTileCost(neighborPos.x, neighborPos.y);
-                    if (cost === Infinity) {
-                        // Treated as unwalkable
-                        continue;
-                    }
-                    moveCost = cost;
-                }
-
-                // 2. Semantic Memory Check (Legacy/Fallback)
-                const cell = this.gridSystem.getCell(neighborPos.x, neighborPos.y);
-                // Logging removed to reduce noise as per "Deterministic" focus usually implies clean logic, 
-                // but keeping functionality.
-
-                if (memoryContext) {
-                    if (memoryContext instanceof Map) {
-                        if (memoryContext.has(neighborKey)) {
-                            const memory = memoryContext.get(neighborKey);
-                            if (memory && memory.type === 'trap') {
-                                // console.log(`[Pathfinding] Avoiding known trap at ${neighborKey}`);
-                                continue;
-                            }
-                        }
-                    } else if (Array.isArray(memoryContext)) {
-                        if (memoryContext.includes(neighborKey)) {
-                            continue;
-                        }
-                    }
+                // Check Exclude Nodes (Treat as Wall)
+                if (excludeNodes && excludeNodes.has(neighborKey)) {
+                    continue;
                 }
 
                 if (!this.gridSystem.isWalkable(neighborPos.x, neighborPos.y)) {
                     continue;
                 }
 
+                // Calculate Cost
+                let moveCost = 1;
+                if (preferredNodes && preferredNodes.has(neighborKey)) {
+                    moveCost = 0.8;
+                }
+
                 const gScore = currentNode.g + moveCost;
-                let neighborNode = openSet.find(n => n.x === neighborPos.x && n.y === neighborPos.y);
+
+                let neighborNode = openSetMap.get(neighborKey);
 
                 if (!neighborNode) {
                     neighborNode = {
@@ -128,6 +113,7 @@ export class Pathfinding {
                     };
                     neighborNode.f = neighborNode.g + neighborNode.h;
                     openSet.push(neighborNode);
+                    openSetMap.set(neighborKey, neighborNode);
                 } else if (gScore < neighborNode.g) {
                     neighborNode.g = gScore;
                     neighborNode.f = neighborNode.g + neighborNode.h;
@@ -156,6 +142,8 @@ export class Pathfinding {
         for (const dir of dirs) {
             const nx = node.x + dir.x;
             const ny = node.y + dir.y;
+            // Since we check isWalkable later, just bounding check here might be enough, 
+            // but relying on GridSystem.getCell to ensure it's in bounds.
             if (this.gridSystem.getCell(nx, ny)) {
                 neighbors.push({ x: nx, y: ny });
             }
@@ -174,7 +162,7 @@ export class Pathfinding {
         return path.reverse();
     }
 
-    public findNearestWalkableTile(start: Point, visited: Set<string>): Point | null {
+    public findNearestWalkableTile(start: Point, visited: Set<string>, excludeNodes?: Set<string>): Point | null {
         const queue: Point[] = [start];
         const checked = new Set<string>();
         checked.add(`${start.x},${start.y}`);
@@ -183,11 +171,14 @@ export class Pathfinding {
             const current = queue.shift()!;
             const key = `${current.x},${current.y}`;
 
-            // If this tile is walkable and NOT visited (and not the start itself, strictly speaking, 
-            // but if start is already visited it won't trigger unless we handle start separately.
-            // Assuming 'visited' includes current position if we just stepped there.
-            // We want to find a target to GO TO.
-            if (!visited.has(key) && this.gridSystem.isWalkable(current.x, current.y)) {
+            // Check conditions
+            const isExcluded = excludeNodes ? excludeNodes.has(key) : false;
+
+            // We want a tile that is:
+            // 1. Not in visited (we want something new)
+            // 2. Is Walkable
+            // 3. Not Excluded
+            if (!visited.has(key) && this.gridSystem.isWalkable(current.x, current.y) && !isExcluded) {
                 return current;
             }
 
@@ -196,11 +187,14 @@ export class Pathfinding {
                 const nKey = `${neighbor.x},${neighbor.y}`;
                 if (!checked.has(nKey)) {
                     checked.add(nKey);
-                    // Only add to queue if walkable? 
-                    // BFS for "nearest unvisited" implies we traverse the grid.
-                    // If walls block us, we shouldn't pass through them.
-                    // So yes, isWalkable check is needed for traversal too.
-                    if (this.gridSystem.isWalkable(neighbor.x, neighbor.y)) {
+
+                    // Only traverse if walkable and not excluded?
+                    // If a node is excluded (known trap), we probably shouldn't pass through it to find other nodes?
+                    // But if it's just a trap, maybe we can see PAST it?
+                    // For safety, let's treat excluded nodes as Walls in BFS as well.
+                    const isNeighborExcluded = excludeNodes ? excludeNodes.has(nKey) : false;
+
+                    if (this.gridSystem.isWalkable(neighbor.x, neighbor.y) && !isNeighborExcluded) {
                         queue.push(neighbor);
                     }
                 }
@@ -210,3 +204,4 @@ export class Pathfinding {
         return null;
     }
 }
+

@@ -36,6 +36,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private justArrived: boolean = false;
     private stepCount: number = 0;
     private memory: Map<string, { type: string, detail: string, timestamp: number }> = new Map();
+    private knownTraps: Set<string> = new Set();
     private target: { x: number, y: number } | null = null;
 
     // Pause Logic
@@ -132,27 +133,50 @@ export class Adventurer extends Phaser.GameObjects.Container {
         const currentGrid = this.gridSystem.worldToGrid(this.x, this.y);
         if (!currentGrid) return;
 
-        const target = this.pathfinding.findNearestWalkableTile(currentGrid, this.visitedTiles);
+        // Find nearest walkable tile, excluding known traps
+        const target = this.pathfinding.findNearestWalkableTile(
+            currentGrid,
+            this.visitedTiles,
+            this.knownTraps
+        );
 
         if (target) {
-            // 2. Path to it
+            // 2. Path to it, avoiding known traps and preferring visited tiles
             const newPath = this.pathfinding.findPath(
                 currentGrid,
                 target,
-                this.memory
+                this.knownTraps,     // excludeNodes
+                this.visitedTiles    // preferredNodes
             );
 
             if (newPath.length > 0) {
                 this.path = newPath;
                 this.isPanic = false;
             } else {
-                console.log(`Adventurer ${this.id} target unreachable.`);
+                console.log(`Adventurer ${this.id} target unreachable (blocked by traps?).`);
                 this.enterPanic();
             }
         } else {
             console.log(`Adventurer ${this.id} explored everything or trapped.`);
             this.enterPanic();
         }
+    }
+
+    private checkForTrap(targetX: number, targetY: number): boolean {
+        const cell = this.gridSystem.getCell(targetX, targetY);
+        const key = `${targetX},${targetY}`;
+
+        if (cell && cell.trap && !this.knownTraps.has(key)) {
+            // Trap detected!
+            this.stamina -= 5;
+            this.updateStaminaBar();
+            this.showEmote('😨');
+            this.knownTraps.add(key);
+            console.log(`Adventurer ${this.id} spotted trap at ${key}! Panic!`);
+            this.enterPanic();
+            return true;
+        }
+        return false;
     }
 
     private enterPanic() {
@@ -230,6 +254,14 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
         // Calculate Direction for Flip
         if (nextTile) {
+            // Check for Traps before moving
+            if (this.checkForTrap(nextTile.x, nextTile.y)) {
+                // Trap detected, stop moving and rethink
+                this.path = []; // Clear current path
+                this.decideNextPath();
+                return { reachedEnd: false, enteredNewTile: false };
+            }
+
             if (nextTile.x < currentTile.x) {
                 this.bodySprite.setFlipX(true);
             } else if (nextTile.x > currentTile.x) {
