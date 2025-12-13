@@ -45,6 +45,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
     // Panic Logic
     private isPanic: boolean = false;
+    private isPanicAnimating: boolean = false;
     private panicTimer: number = 0;
 
     // Visuals
@@ -228,13 +229,14 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public move(dt: number, gridSystem: any): { reachedEnd: boolean, enteredNewTile: boolean } {
         if (this.isDying) return { reachedEnd: false, enteredNewTile: false };
         if (this.isJumping) return { reachedEnd: false, enteredNewTile: false };
+        if (this.isPanicAnimating) return { reachedEnd: false, enteredNewTile: false };
 
-        // Panic Burn Logic
+        // Panic Burn Logic (Stuck State)
         if (this.isPanic && !this.isMoving) {
             this.panicTimer += dt;
             if (this.panicTimer >= 1.0) { // Burn 1 stamina per second
                 this.panicTimer -= 1.0;
-                this.consumeStamina(); // Use consume method to sync UI
+                this.consumeStamina();
                 if (this.stamina <= 0) {
                     return { reachedEnd: false, enteredNewTile: false };
                 }
@@ -261,10 +263,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
         // 4. Check Path End / Need New Path
         if (this.path.length <= 1) {
-            // Reached current target or no path
             this.decideNextPath();
-
-            // If still no path (Panic), just return
             if (this.path.length <= 1) {
                 return { reachedEnd: false, enteredNewTile: false };
             }
@@ -274,19 +273,65 @@ export class Adventurer extends Phaser.GameObjects.Container {
         const currentTile = this.path[0];
         const nextTile = this.path[1];
 
-        // Ensure we are logically at currentTile
-        // (Sometimes pathfinding includes start node, sometimes not, but we assume path[0] is current)
-
-        // Calculate Direction for Flip
         if (nextTile) {
-            // Check for Traps before moving
-            if (this.checkForTrap(nextTile.x, nextTile.y)) {
-                // Trap detected, stop moving and rethink
-                this.path = []; // Clear current path
-                this.decideNextPath();
+            // Check for Trap (Peek & Panic Logic)
+            const trap = gridSystem.getCell(nextTile.x, nextTile.y)?.trap;
+            const key = `${nextTile.x},${nextTile.y}`;
+
+            // Condition: Trap exists, is Scary, and is Unknown
+            if (trap && trap.config.isScary && !this.knownTraps.has(key)) {
+                // Panic Trigger
+                this.isPanicAnimating = true;
+
+                // Calculate Tween Target (40% into tile)
+                const startWorld = gridSystem.gridToWorld(currentTile.x, currentTile.y);
+                const targetWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
+
+                // Flip Logic
+                if (nextTile.x < currentTile.x) {
+                    this.bodySprite.setFlipX(true);
+                } else if (nextTile.x > currentTile.x) {
+                    this.bodySprite.setFlipX(false);
+                }
+
+                const dx = (targetWorld.x - startWorld.x) * 0.4;
+                const dy = (targetWorld.y - startWorld.y) * 0.4;
+
+                // Tween Sequence
+                this.scene.tweens.add({
+                    targets: this.bodySprite,
+                    x: dx,
+                    y: dy,
+                    duration: 200,
+                    ease: 'Sine.easeOut',
+                    onComplete: () => {
+                        // 2. Show Emote & Deduct Stamina
+                        this.showEmote('😨');
+                        this.stamina -= 5;
+                        this.updateStaminaBar();
+
+                        // 3. Move Back
+                        this.scene.tweens.add({
+                            targets: this.bodySprite,
+                            x: 0,
+                            y: 0,
+                            duration: 200,
+                            ease: 'Sine.easeIn',
+                            onComplete: () => {
+                                // 4. On Complete
+                                this.isPanicAnimating = false;
+                                this.knownTraps.add(key);
+                                this.path = []; // Reset path to force recalculation
+                                this.decideNextPath();
+                            }
+                        });
+                    }
+                });
+
                 return { reachedEnd: false, enteredNewTile: false };
             }
 
+            // Normal Movement
             if (nextTile.x < currentTile.x) {
                 this.bodySprite.setFlipX(true);
             } else if (nextTile.x > currentTile.x) {
@@ -303,18 +348,17 @@ export class Adventurer extends Phaser.GameObjects.Container {
                 targets: this,
                 x: nextWorld.x,
                 y: nextWorld.y,
-                duration: 300, // Fixed time for snappy move
+                duration: 300,
                 ease: 'Linear',
                 onComplete: () => {
                     this.path.shift();
                     this.isMoving = false;
                     this.justArrived = true;
                     this.pauseTimer = this.PAUSE_DURATION;
+                    // Reset sprite local pos just in case
+                    this.bodySprite.setPosition(0, 0);
 
-                    // Consume Stamina
                     this.consumeStamina();
-
-                    // Track Visit
                     this.visitedTiles.add(`${nextTile.x},${nextTile.y}`);
                 }
             });
@@ -336,7 +380,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
                 angle: wobble,
                 duration: 150,
                 yoyo: true,
-                ease: 'Sine.easeInOut'
+                ease: 'Sine.easeInOut',
+                onComplete: () => { this.bodySprite.setAngle(0); }
             });
         }
 

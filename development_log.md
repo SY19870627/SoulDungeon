@@ -199,3 +199,9 @@
   - `Spike`, `Fire`, `Bear Trap`: `isScary: true` -> Triggers Panic & Stamina Burn.
   - `Spring`: `isScary: false` -> Ignored by anxiety logic. Adventurers walk blindly into them.
 - **Outcome**: Adventurers now intelligently avoid dangerous traps but fall for utility traps.
+
+### 23. High-Fidelity "Peek & Panic" Animation
+- **Visuals**: Implemented specific "Probe" tween sequence for Trap Anxiety.
+- **Behavior**: Instead of just stopping, Adventurer now physically steps 40% into the dangerous tile, creates a "😨" emote, recoils back to origin, and then reroutes.
+- **State Management**: Added `isPanicAnimating` flag to prevent movement logic conflicts during the probe animation.
+- **Psychology**: Reinforces the "Smart Mouse" feel where adventurers visibly test the waters before panicking.
