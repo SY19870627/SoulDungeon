@@ -169,6 +169,10 @@ export class MainScene extends Phaser.Scene {
         this.economyManager.on('gold-updated', (gold: number) => {
             window.dispatchEvent(new CustomEvent('gold-updated', { detail: gold }));
         });
+
+        window.addEventListener('grid-updated', () => {
+            this.refresh();
+        });
     }
 
     private setupInput() {

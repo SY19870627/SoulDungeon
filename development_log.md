@@ -148,5 +148,9 @@
     -   **Logic**: Extracted internal physics logic from `TrapSystem` into specific handler methods.
     -   **Cleanup**: Deleted redundant `Hero.ts`.
 
+### 15. Mechanics: Recursive Fire Propagation
+-   **Content**: Implemented instant ignition system using recursion (Flood Fill). Placing Fire next to a line of Oil now instantly ignites the entire path. Aligned Burning Oil price with standard Oil.
+
+
 
 

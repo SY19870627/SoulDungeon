@@ -74,12 +74,12 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         element: 'fire',
         cooldown: 0
     },
-    'inferno': {
-        id: 'inferno',
-        name: 'Inferno',
+    'burning_oil': {
+        id: 'burning_oil',
+        name: 'Burning Oil',
         type: 'damage',
         color: 0x8b0000, // Dark Red
-        cost: 0, // Not purchasable directly
+        cost: 0,
         damage: 50,
         element: 'fire',
         emoteSuccess: '🔥',

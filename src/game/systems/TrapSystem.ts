@@ -212,57 +212,74 @@ export class TrapSystem {
         }
     }
 
+    private static igniteOil(gridSystem: GridSystem, x: number, y: number) {
+        const cell = gridSystem.getCell(x, y);
+        if (!cell || !cell.trap || cell.trap.config.id !== 'oil') {
+            return;
+        }
+
+        // Transform 'oil' -> 'burning_oil'
+        const burningOilConfig = TRAP_DEFINITIONS['burning_oil'];
+        if (burningOilConfig) {
+            console.log(`Igniting oil at ${x},${y}`);
+            gridSystem.removeTrap(x, y);
+            gridSystem.placeTrap(x, y, {
+                config: burningOilConfig,
+                type: burningOilConfig.type,
+                cooldownTimer: 0,
+                x: x,
+                y: y
+            });
+            window.dispatchEvent(new CustomEvent('grid-updated'));
+        }
+
+        // Recursive Propagation (Flood Fill) to Neighbors
+        // Add delay for visual spread effect
+        setTimeout(() => {
+            const neighbors = [
+                { x: x + 1, y: y }, { x: x - 1, y: y },
+                { x: x, y: y + 1 }, { x: x, y: y - 1 }
+            ];
+
+            for (const n of neighbors) {
+                TrapSystem.igniteOil(gridSystem, n.x, n.y);
+            }
+        }, 150);
+    }
+
     public static checkAndApplySynergy(gridSystem: GridSystem, x: number, y: number) {
         const centerCell = gridSystem.getCell(x, y);
         if (!centerCell || !centerCell.trap) return;
 
         const centerTrap = centerCell.trap;
-        const centerElement = centerTrap.config.element;
-        if (!centerElement) return;
+        const centerConfig = centerTrap.config;
 
         const neighbors = [
             { x: x + 1, y: y }, { x: x - 1, y: y },
             { x: x, y: y + 1 }, { x: x, y: y - 1 }
         ];
 
-        let upgradeCenter = false;
-        let newCenterTrapId = '';
-
-        for (const n of neighbors) {
-            const cell = gridSystem.getCell(n.x, n.y);
-            if (cell && cell.trap) {
-                const neighborTrap = cell.trap;
-                const neighborElement = neighborTrap.config.element;
-                if (!neighborElement) continue;
-
-                let synergyFound = false;
-                let newNeighborTrapId = '';
-
-                if ((centerElement === 'oil' && (neighborElement === 'fire' || neighborElement === 'fire')) ||
-                    ((centerElement === 'fire' || centerElement === 'fire') && neighborElement === 'oil')) {
-                    synergyFound = true;
-                    newNeighborTrapId = 'inferno';
-                    newCenterTrapId = 'inferno';
-                }
-
-                if (synergyFound) {
-                    const newTrapConfig = TRAP_DEFINITIONS[newNeighborTrapId];
-                    if (newTrapConfig) {
-                        console.log(`Upgrading neighbor at ${n.x},${n.y} to ${newNeighborTrapId}`);
-                        gridSystem.removeTrap(n.x, n.y);
-                        gridSystem.placeTrap(n.x, n.y, { config: newTrapConfig, type: newTrapConfig.type, cooldownTimer: 0, x: n.x, y: n.y });
-                    }
-                    upgradeCenter = true;
+        // Scenario A: Placed Oil
+        if (centerConfig.id === 'oil') {
+            let ignited = false;
+            // Check if any neighbor is fire
+            for (const n of neighbors) {
+                const cell = gridSystem.getCell(n.x, n.y);
+                if (cell && cell.trap && cell.trap.config.element === 'fire') {
+                    ignited = true;
+                    break;
                 }
             }
-        }
 
-        if (upgradeCenter && newCenterTrapId) {
-            const newTrapConfig = TRAP_DEFINITIONS[newCenterTrapId];
-            if (newTrapConfig) {
-                console.log(`Upgrading center at ${x},${y} to ${newCenterTrapId}`);
-                gridSystem.removeTrap(x, y);
-                gridSystem.placeTrap(x, y, { config: newTrapConfig, type: newTrapConfig.type, cooldownTimer: 0, x, y });
+            if (ignited) {
+                TrapSystem.igniteOil(gridSystem, x, y);
+            }
+        }
+        // Scenario B: Placed Fire Source (Fire or Burning Oil)
+        else if (centerConfig.element === 'fire') {
+            // Check all neighbors for oil
+            for (const n of neighbors) {
+                TrapSystem.igniteOil(gridSystem, n.x, n.y);
             }
         }
     }
