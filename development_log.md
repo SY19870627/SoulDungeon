@@ -168,6 +168,10 @@
 ### 18. [Dev Log] - Debugging & Transparency
 - **Logging**: Added console logs to `Pathfinding` (inspection) and `TrapSystem` (interaction) to clearly indicate when Adventurers encounter Walls or Traps.
 
+### 19. AI Infrastructure (Deterministic Pathfinding)
+- **Refactoring**: Refactored Pathfinding to support injected traversal rules. This enables deterministic AI behaviors (e.g., units logically treating traps as walls) without adding randomness.
+- **Implementation**: Updated `findPath` to accept a `getTileCost` callback, allowing specific logic (Infinity cost = Wall) to be injected per pathfinding request.
+
 
 
 

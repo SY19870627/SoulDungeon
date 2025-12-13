@@ -192,6 +192,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
     *   **New**: 實作基礎地刺陷阱、捕獸夾與符文陷阱原型。
 *   **Phase 2**：物理位移 (彈簧)、假人模擬、連擊判定。
 *   **Phase 3**：冒險者 AI (騎士/貪吃/盜賊)、誘餌系統、傷害數值化。
+    *   [x] Refactor Pathfinding to support Deterministic Traversal Rules (Cost Strategy)
 *   **Phase 4**：
     *   關卡制/經營循環：加入「天數」概念，每天結束後結算金錢，購買新陷阱。
     *   遺物系統實裝：實作被動技能選擇。
@@ -218,6 +219,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
     *   特性：高效能 WebGL 渲染，專為 2D 遊戲設計，支援 Tween-based animation 與豐富的動態效果。
 
     *   React 負責 UI 層，Phaser 負責 Game Loop 層，兩者透過 Event System 進行通訊。
+    *   **AI Logic**: Deterministic (No RNG in Pathfinding) to allow predictable trap interactions.
 
 ## Adventurer AI System v2: The "Smart Mouse" Logic
 - **Core Concept**: Adventurers now behave like mice in a maze that learn from pain.

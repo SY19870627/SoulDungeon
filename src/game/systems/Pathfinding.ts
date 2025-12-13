@@ -24,13 +24,14 @@ export class Pathfinding {
     public findPath(
         start: Point,
         end: Point,
-        memoryContext?: Map<string, { type: string, detail: string }> | string[]
+        memoryContext?: Map<string, { type: string, detail: string }> | string[],
+        getTileCost?: (x: number, y: number) => number
     ): Point[] {
         const memorySize = memoryContext instanceof Map ? memoryContext.size : (Array.isArray(memoryContext) ? memoryContext.length : 0);
-        console.log(`[Pathfinding] findPath from ${start.x},${start.y} to ${end.x},${end.y}. MemoryKeys: ${memorySize}`);
+        // console.log(`[Pathfinding] findPath from ${start.x},${start.y} to ${end.x},${end.y}. MemoryKeys: ${memorySize}`);
 
         if (!this.gridSystem.isWalkable(start.x, start.y) || !this.gridSystem.isWalkable(end.x, end.y)) {
-            console.log(`[Pathfinding] Start or End unwalkable`);
+            // console.log(`[Pathfinding] Start or End unwalkable`);
             return [];
         }
 
@@ -77,28 +78,33 @@ export class Pathfinding {
                     continue;
                 }
 
-                // Semantic Memory Check
-                const cell = this.gridSystem.getCell(neighborPos.x, neighborPos.y);
-                if (cell) {
-                    if (cell.isWall) {
-                        console.log(`[Pathfinding] Encountered Wall at ${neighborPos.x},${neighborPos.y}`);
-                    } else if (cell.trap) {
-                        console.log(`[Pathfinding] Encountered Trap at ${neighborPos.x},${neighborPos.y} (Type: ${cell.trap.config.type})`);
+                // 1. Check Custom Cost (Deterministic Rules)
+                let moveCost = 1;
+                if (getTileCost) {
+                    const cost = getTileCost(neighborPos.x, neighborPos.y);
+                    if (cost === Infinity) {
+                        // Treated as unwalkable
+                        continue;
                     }
+                    moveCost = cost;
                 }
+
+                // 2. Semantic Memory Check (Legacy/Fallback)
+                const cell = this.gridSystem.getCell(neighborPos.x, neighborPos.y);
+                // Logging removed to reduce noise as per "Deterministic" focus usually implies clean logic, 
+                // but keeping functionality.
 
                 if (memoryContext) {
                     if (memoryContext instanceof Map) {
                         if (memoryContext.has(neighborKey)) {
                             const memory = memoryContext.get(neighborKey);
                             if (memory && memory.type === 'trap') {
-                                console.log(`[Pathfinding] Avoiding known trap at ${neighborKey} (${memory.detail})`);
+                                // console.log(`[Pathfinding] Avoiding known trap at ${neighborKey}`);
                                 continue;
                             }
                         }
                     } else if (Array.isArray(memoryContext)) {
                         if (memoryContext.includes(neighborKey)) {
-                            console.log(`[Pathfinding] Avoiding excluded neighbor: ${neighborKey}`);
                             continue;
                         }
                     }
@@ -108,7 +114,7 @@ export class Pathfinding {
                     continue;
                 }
 
-                const gScore = currentNode.g + 1; // Assuming cost is 1 for orthogonal movement
+                const gScore = currentNode.g + moveCost;
                 let neighborNode = openSet.find(n => n.x === neighborPos.x && n.y === neighborPos.y);
 
                 if (!neighborNode) {
