@@ -210,3 +210,9 @@
 - **Feature**: Added "Boing" animation for Spring Traps.
 - **Visuals**: Trap sprite scales (1.0 -> 1.5 -> 1.0) using a `Back.out` ease when an Adventurer lands on it.
 - **Sync**: Animation triggers exactly on `enteredNewTile` event, providing immediate visual feedback for the physics interaction.
+
+### 25. Physics - Spring Trap Wall Collision
+- **Mechanic**: Adventurers flung by Spring Traps check their trajectory for walls.
+- **Collision**: If a wall is in the way, the adventurer flies towards it, crashes ('Bonk'), takes 15 damage, and rebounds to the start position.
+- **Visuals**: Implemented `bonkAgainstWall` tween sequence with '😵' emote and camera shake.
+- **Strategy**: Encourages players to use walls specifically as "Anvils" for their traps.

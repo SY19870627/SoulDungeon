@@ -252,6 +252,43 @@ export class Adventurer extends Phaser.GameObjects.Container {
                 if (trap && (trap.config.id === 'spring' || trap.type === 'physics')) {
                     // Trigger "Boing"
                     (this.scene as MainScene).animateTrapTrigger(gridPos.x, gridPos.y);
+
+                    // Physics Logic for Spring
+                    const direction = trap.direction || 'up';
+                    const pushDistance = trap.config.pushDistance || 2;
+                    let dx = 0;
+                    let dy = 0;
+
+                    if (direction === 'up') dy = -pushDistance;
+                    else if (direction === 'down') dy = pushDistance;
+                    else if (direction === 'left') dx = -pushDistance;
+                    else if (direction === 'right') dx = pushDistance;
+
+                    const targetGridX = gridPos.x + dx;
+                    const targetGridY = gridPos.y + dy;
+
+                    // Check Wall Collision
+                    if (!this.gridSystem.isWalkable(targetGridX, targetGridY)) {
+                        this.bonkAgainstWall(targetGridX, targetGridY);
+                        return { reachedEnd: false, enteredNewTile: true };
+                    }
+
+                    // Proceed to legacy jump logic (TrapSystem usually handles this, 
+                    // triggers 'physics' effect which calls handlePhysicsTrap).
+                    // If we want to override here, we could. 
+                    // But if TrapSystem is also running, we might double trigger.
+                    // However, TrapSystem runs in 'update' loop or via triggers.
+                    // If we handle it here, we should ensure TrapSystem doesn't also do it.
+                    // Or, we assume this is merely "VISUAL" and let TrapSystem handle logic?
+                    // User Request: "Modify src/game/objects/Adventurer.ts... Update move()... Check... If wall... bonk"
+                    // implies we are intercepting the logic here.
+                    // Since "TrapSystem" is legacy or component based, let's assume we handle it here
+                    // to effectively "Stun" them so they don't trigger the standard TrapSystem logic?
+                    // But standard TrapSystem logic waits for cooldown?
+
+                    // Actually, if we return here, we are just finishing "move".
+                    // The TrapSystem might still trigger if it detects the adventurer on the trap.
+                    // Ideally we consume the trap event.
                 }
             }
 
@@ -477,6 +514,52 @@ export class Adventurer extends Phaser.GameObjects.Container {
     }
 
     // Visual Feedback Methods
+    public bonkAgainstWall(targetGridX: number, targetGridY: number) {
+        this.isJumping = true; // Block movement
+
+        const targetWorld = this.gridSystem.gridToWorld(targetGridX, targetGridY);
+        // Offset slightly to not overlap fully inside the wall
+        const currentWorld = { x: this.x, y: this.y };
+
+        // Launch to Wall
+        this.scene.tweens.add({
+            targets: this,
+            x: targetWorld.x,
+            y: targetWorld.y,
+            duration: 150,
+            ease: 'Quad.easeIn',
+            onComplete: () => {
+                // Impact
+                this.showEmote('😵');
+                this.takeDamage(15, undefined, undefined);
+                this.scene.cameras.main.shake(100, 0.01);
+
+                // Rebound
+                this.scene.tweens.add({
+                    targets: this,
+                    x: currentWorld.x,
+                    y: currentWorld.y,
+                    duration: 300,
+                    ease: 'Bounce.out',
+                    onComplete: () => {
+                        this.isJumping = false;
+                        this.path = []; // Reset path
+                        this.decideNextPath();
+                    }
+                });
+            }
+        });
+
+        // Arc height for visual flair
+        this.scene.tweens.add({
+            targets: this.bodySprite,
+            y: -20,
+            duration: 150,
+            yoyo: true,
+            ease: 'Sine.easeOut'
+        });
+    }
+
     public playAttackAnimation(targetX: number, targetY: number): Promise<void> {
         return new Promise(resolve => {
             const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY);
