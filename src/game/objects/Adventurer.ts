@@ -17,6 +17,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public path: { x: number, y: number }[];
     public progress: number = 0;
     public isJumping: boolean = false;
+    public isMoving: boolean = false;
+    private justArrived: boolean = false;
 
     // Pause Logic
     private pauseTimer: number = 0;
@@ -119,80 +121,67 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public move(dt: number, gridSystem: any): { reachedEnd: boolean, enteredNewTile: boolean } {
         if (this.isJumping) return { reachedEnd: false, enteredNewTile: false };
 
-        // Returns true if reached end
-        if (this.path.length <= 1) {
-            this.bodySprite.stop(); // Stop animation at end
-            return { reachedEnd: true, enteredNewTile: false };
-        }
-
-        // Handle Pause
-        if (this.pauseTimer > 0) {
-            this.pauseTimer -= dt;
-            if (this.pauseTimer <= 0) {
-                // Pause finished, proceed to next tile
-                this.progress -= 1;
-                this.path.shift();
-            } else {
-                // Still paused - idle/stop animation
-                this.bodySprite.stop();
-                // Optionally play 'idle' if available
-                return { reachedEnd: false, enteredNewTile: false };
-            }
-        }
-
-        this.progress += this.speed * dt;
-
-        if (this.progress >= 1) {
-            // Reached target tile, start pause
-            this.pauseTimer = this.PAUSE_DURATION;
-
-            // Snap to exact target position
-            const nextTile = this.path[1];
-            const nextWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
-            this.x = nextWorld.x;
-            this.y = nextWorld.y;
-
-            this.bodySprite.stop(); // Stop animation during pause
-
-            // We just arrived at the center of the new tile. Trigger trap now!
-            console.log(`Adventurer ${this.id} entered new tile: ${nextTile.x}, ${nextTile.y}`);
+        // 1. Handle Arrival State (Trigger Trap)
+        if (this.justArrived) {
+            this.justArrived = false;
+            // Pause timer is already set by tween complete
             return { reachedEnd: false, enteredNewTile: true };
         }
 
-        if (this.path.length > 1) {
-            const currentTile = this.path[0];
-            const nextTile = this.path[1];
-
-            const currentWorld = gridSystem.gridToWorld(currentTile.x, currentTile.y);
-            const nextWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
-
-            this.x = Phaser.Math.Linear(currentWorld.x, nextWorld.x, this.progress);
-            this.y = Phaser.Math.Linear(currentWorld.y, nextWorld.y, this.progress);
-
-            // Update Animation Direction
-            const angle = Phaser.Math.Angle.Between(currentWorld.x, currentWorld.y, nextWorld.x, nextWorld.y);
-
-            // Radian to localized direction
-            // 0 = Right, PI/2 = Down, PI = Left, -PI/2 = Up
-            let animKey = 'run-down';
-            let flipX = false;
-
-            // Simple 4-way direction check
-            if (Math.abs(angle) < Math.PI / 4) {
-                animKey = 'run-right';
-                flipX = false;
-            } else if (Math.abs(angle) > 3 * Math.PI / 4) {
-                animKey = 'run-right'; // Re-use right for left with flip
-                flipX = true;
-            } else if (angle > 0) {
-                animKey = 'run-down';
-            } else {
-                animKey = 'run-up';
-            }
-
-            this.bodySprite.setFlipX(flipX);
-            this.bodySprite.play(animKey, true); // true = ignoreIfPlaying
+        // 2. Handle Moving State
+        if (this.isMoving) {
+            return { reachedEnd: false, enteredNewTile: false };
         }
+
+        // 3. Handle Pause State
+        if (this.pauseTimer > 0) {
+            this.pauseTimer -= dt;
+            return { reachedEnd: false, enteredNewTile: false };
+        }
+
+        // 4. Check Path End
+        if (this.path.length <= 1) {
+            return { reachedEnd: true, enteredNewTile: false };
+        }
+
+        // 5. Start Move (Hop)
+        const currentTile = this.path[0];
+        const nextTile = this.path[1];
+
+        // Calculate Direction for Flip
+        if (nextTile.x < currentTile.x) {
+            this.bodySprite.setFlipX(true);
+        } else if (nextTile.x > currentTile.x) {
+            this.bodySprite.setFlipX(false);
+        }
+
+        const nextWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
+
+        this.isMoving = true;
+
+        // Position Tween
+        this.scene.tweens.add({
+            targets: this,
+            x: nextWorld.x,
+            y: nextWorld.y,
+            duration: 300, // Fixed time for snappy move
+            ease: 'Linear',
+            onComplete: () => {
+                this.path.shift();
+                this.isMoving = false;
+                this.justArrived = true;
+                this.pauseTimer = this.PAUSE_DURATION;
+            }
+        });
+
+        // Hop Tween (Visual)
+        this.scene.tweens.add({
+            targets: this.bodySprite,
+            y: -20, // Hop up
+            duration: 150,
+            yoyo: true,
+            ease: 'Sine.easeOut'
+        });
 
         return { reachedEnd: false, enteredNewTile: false };
     }
@@ -212,10 +201,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
         // Face the target (Simplified: Just flip if moving left)
         if (targetX < this.x) {
             this.bodySprite.setFlipX(true);
-            this.bodySprite.play('run-right', true);
         } else if (targetX > this.x) {
             this.bodySprite.setFlipX(false);
-            this.bodySprite.play('run-right', true);
         }
         // If mostly vertical, maybe use up/down? Keeping simple.
 
@@ -243,30 +230,73 @@ export class Adventurer extends Phaser.GameObjects.Container {
             // Actually, previous code tweened scale to 1.5. 
             // If I used setDisplaySize, 'scale' is derived.
             // I will tween 'y' of the bodySprite relative to container.
-            y: -30, // Jump UP relative to container
+            y: -40, // Higher jump for spring
             duration: duration / 2,
             yoyo: true,
             ease: 'Sine.easeOut'
         });
     }
 
-    public isDying: boolean = false;
+    // Visual Feedback Methods
+    public playAttackAnimation(targetX: number, targetY: number): Promise<void> {
+        return new Promise(resolve => {
+            const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY);
+            const lungeDist = 15;
 
-    public die(onComplete: () => void) {
+            const offsetX = Math.cos(angle) * lungeDist;
+            const offsetY = Math.sin(angle) * lungeDist;
+
+            // Lunge (Tween bodySprite to keep container fixed)
+            this.scene.tweens.add({
+                targets: this.bodySprite,
+                x: offsetX,
+                y: offsetY,
+                duration: 120,
+                yoyo: true,
+                ease: 'Back.easeOut',
+                onComplete: () => {
+                    this.bodySprite.setPosition(0, 0);
+                    resolve();
+                }
+            });
+        });
+    }
+
+    public playDamageAnimation() {
+        // Flash Red
+        this.bodySprite.setTint(0xff0000);
+        this.scene.time.delayedCall(200, () => this.bodySprite.clearTint());
+
+        // Shake
+        this.scene.tweens.add({
+            targets: this.bodySprite,
+            x: { from: -5, to: 5 },
+            duration: 50,
+            yoyo: true,
+            repeat: 3
+        });
+    }
+
+    public playDeathAnimation(onComplete?: () => void) {
         this.isDying = true;
-
-        // Stop any movement or other tweens
         this.scene.tweens.killTweensOf(this);
         this.scene.tweens.killTweensOf(this.bodySprite);
 
         this.scene.tweens.add({
             targets: this,
-            scale: 0,
-            angle: 360,
+            angle: 90, // Topple
             alpha: 0,
             duration: 500,
             ease: 'Power2',
             onComplete: onComplete
         });
     }
+
+    public die(onComplete: () => void) {
+        this.playDeathAnimation(onComplete);
+    }
+
+    public isDying: boolean = false;
+
+
 }

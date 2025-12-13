@@ -98,3 +98,10 @@
 - [ ] Day/Night Cycle (Shop, Economy)
 - [ ] Relic System
 - [ ] More Content (Levels, Monsters)
+
+### 9. Visual Architecture Shift - Code-Driven Animation (2025-12-13)
+*   **Topic**: Visual Architecture Shift - Code-Driven Animation.
+*   **Changes**:
+    *   Deprecated Frame-by-Frame animations to reduce asset dependency (Board Game Style).
+    *   Refactored `Hero` and `Adventurer` to use Tween-based "Board Game Style" movement (Hop/Jump).
+    *   Implemented procedural visual feedback for Attack (Lunge), Damage (Flash/Shake), and Death (Topple).

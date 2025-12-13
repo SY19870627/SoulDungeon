@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { HeroDefinition } from '../../data/heroes';
 
 export class Hero extends Phaser.GameObjects.Container {
+    private bodySprite: Phaser.GameObjects.Sprite;
     private hpBar: Phaser.GameObjects.Graphics;
     private maxHp: number;
     public currentHp: number;
@@ -17,10 +18,10 @@ export class Hero extends Phaser.GameObjects.Container {
         this.gridX = 0; // Initial grid pos
         this.gridY = 0;
 
-        // Visuals
-        const text = scene.add.text(0, 0, definition.icon, { fontSize: '32px' });
-        text.setOrigin(0.5);
-        this.add(text);
+        // Visuals - Board Game Piece Style
+        this.bodySprite = scene.add.sprite(0, 0, 'hero_run_sheet', 0);
+        this.bodySprite.setDisplaySize(48, 48);
+        this.add(this.bodySprite);
 
         // HP Bar
         this.hpBar = scene.add.graphics();
@@ -55,15 +56,65 @@ export class Hero extends Phaser.GameObjects.Container {
         this.currentHp -= amount;
         this.updateHpBar();
 
-        // Hit effect
-        this.scene.tweens.add({
-            targets: this,
-            scale: { from: 1.2, to: 1 },
-            duration: 100,
-            yoyo: true
-        });
+        // Hit effect (Damage)
+        this.playDamageAnimation();
 
         return this.currentHp <= 0;
+    }
+
+    public playDamageAnimation() {
+        // Flash Color
+        this.bodySprite.setTint(0xff0000);
+        this.scene.time.delayedCall(200, () => this.bodySprite.clearTint());
+
+        // Shake
+        this.scene.tweens.add({
+            targets: this.bodySprite,
+            x: { from: -5, to: 5 },
+            duration: 50,
+            yoyo: true,
+            repeat: 3
+        });
+    }
+
+    public playAttackAnimation(targetX: number, targetY: number): Promise<void> {
+        return new Promise(resolve => {
+            const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY);
+            const lungeDist = 20;
+
+            const offsetX = Math.cos(angle) * lungeDist;
+            const offsetY = Math.sin(angle) * lungeDist;
+
+            this.scene.tweens.add({
+                targets: this.bodySprite, // Tween bodySprite so container position stays valid? 
+                // Or tween container? If we tween container, 'this.x' changes.
+                // It's safer to tween bodySprite for "visual only" movements if we want logical position to remain fixed?
+                // But the prompt says "Move 10px towards target". 
+                // If I move the container, grid logic might get confused if it reads x/y during anim.
+                // Let's tween bodySprite (relative to container 0,0).
+                x: offsetX,
+                y: offsetY,
+                duration: 100,
+                yoyo: true,
+                ease: 'Back.easeOut',
+                onComplete: () => {
+                    this.bodySprite.setPosition(0, 0); // Reset
+                    resolve();
+                }
+            });
+        });
+    }
+
+    public playDeathAnimation(onComplete?: () => void) {
+        this.scene.tweens.add({
+            targets: this,
+            angle: 90, // Topple
+            alpha: 0,
+            duration: 500,
+            onComplete: () => {
+                if (onComplete) onComplete();
+            }
+        });
     }
 
     public moveGrid(gridX: number, gridY: number, gridSize: number): Promise<void> {
@@ -71,13 +122,23 @@ export class Hero extends Phaser.GameObjects.Container {
         this.gridY = gridY;
 
         return new Promise(resolve => {
+            // Linear Move
             this.scene.tweens.add({
                 targets: this,
                 x: gridX * gridSize + gridSize / 2,
                 y: gridY * gridSize + gridSize / 2,
                 duration: 300,
-                ease: 'Power2',
+                ease: 'Linear',
                 onComplete: () => resolve()
+            });
+
+            // Hop Effect (Arc)
+            this.scene.tweens.add({
+                targets: this.bodySprite,
+                y: -20, // Jump height (relative)
+                duration: 150,
+                yoyo: true,
+                ease: 'Sine.easeOut'
             });
         });
     }

@@ -66,24 +66,9 @@ export class MainScene extends Phaser.Scene {
 
     create() {
         // Animations
-        this.anims.create({
-            key: 'run-down',
-            frames: this.anims.generateFrameNumbers('hero_run_sheet', { start: 0, end: 0 }), // Update frames when sheet is ready
-            frameRate: 10,
-            repeat: -1
-        });
-        this.anims.create({
-            key: 'run-right',
-            frames: this.anims.generateFrameNumbers('hero_run_sheet', { start: 0, end: 0 }),
-            frameRate: 10,
-            repeat: -1
-        });
-        this.anims.create({
-            key: 'run-up',
-            frames: this.anims.generateFrameNumbers('hero_run_sheet', { start: 0, end: 0 }),
-            frameRate: 10,
-            repeat: -1
-        });
+        // Animations - DEPRECATED for Board Game Style
+        // this.anims.create({ ... }); 
+        // Using static frames instead.
 
         // Calculate offsets to center the grid
         const gridWidth = 10;

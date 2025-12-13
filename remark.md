@@ -58,6 +58,30 @@
 - [ ] **圖層順序 (Depth Sorting)**：
     - 確保 `Adventurer` 的 depth 高於 `Trap` 和 `Floor`，避免角色被地圖蓋住。
 
+## Visual Refactoring: Board Game Style
+Rules for the new "Tabletop/Board Game" aesthetic:
+
+1.  **No Frame Animations**:
+    -   Deprecated `anims.play()`.
+    -   Characters use a single static texture frame (like a game piece).
+
+2.  **Movement (Hop)**:
+    -   Characters move like board game pieces being lifted and placed.
+    -   **Linear Tween** for X/Y position movement.
+    -   **Sinusoidal Tween** for Y-offset or ScaleY (Squash & Stretch) to simulate the "lift/hop" arc.
+
+3.  **Attack (Lunge)**:
+    -   Elastic "Lunge forward & Return" tween.
+    -   Move ~10px towards target, then snap back.
+
+4.  **Damage**:
+    -   **Flash**: Tint color (0xff0000).
+    -   **Vibration**: Shake effect (adjust X offset rapidly).
+
+5.  **Death**:
+    -   **Topple**: Rotate 90 degrees.
+    -   **Fade**: Alpha to 0.
+
 ---
 
 ## 1. 遊戲概述 (Overview)
