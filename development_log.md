@@ -119,3 +119,10 @@
 *   **Refactoring**:
     *   Updated `TrapSystem` to support both legacy hardcoded effects (Spring) and new component-based traps simultaneously.
     *   Updated `WaveManager` to driver trap updates for proximity detection.
+
+### 11. System Simplification: Elemental Redundancy Removal (2025-12-13)
+-   **Topic**: System Simplification: Elemental Redundancy Removal.
+-   **Changes**:
+    -   Removed redundant elemental traps (Water, Lightning, Poison, Fan) to declutter the gameplay loop.
+    -   Refactored `TrapSystem` and `TrapRegistry` to support only the core Oil+Fire synergy.
+    -   Shifted design focus towards Physics interactions (Movement/Displacement) over static elemental combos.

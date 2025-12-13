@@ -1,7 +1,7 @@
 export type ToolType =
     | 'spring' | 'spike'
     | 'meat' | 'treasure'
-    | 'oil' | 'fire' | 'water' | 'lightning' | 'poison' | 'fan'
+    | 'oil' | 'fire'
     | 'eraser';
 
 export interface ToolDefinition {
@@ -24,10 +24,6 @@ export const TOOLS: ToolDefinition[] = [
     // Elements
     { id: 'oil', name: '油桶', icon: '🛢️', hint: '+火', category: 'element' },
     { id: 'fire', name: '噴火口', icon: '🔥', hint: '+油', category: 'element' },
-    { id: 'water', name: '水坑', icon: '💧', hint: '+雷', category: 'element' },
-    { id: 'lightning', name: '雷電塔', icon: '⚡', hint: '+水', category: 'element' },
-    { id: 'poison', name: '毒氣', icon: '☠️', hint: '+風', category: 'element' },
-    { id: 'fan', name: '風扇', icon: '💨', hint: '+毒', category: 'element' },
 
     // Edit
     { id: 'eraser', name: '清除', icon: '🧹', category: 'edit' },

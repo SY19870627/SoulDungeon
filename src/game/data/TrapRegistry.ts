@@ -74,25 +74,6 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         element: 'fire',
         cooldown: 0
     },
-    'water': {
-        id: 'water',
-        name: 'Water',
-        type: 'elemental',
-        color: 0x3498db,
-        cost: 10,
-        element: 'water',
-        cooldown: 0
-    },
-    'lightning': {
-        id: 'lightning',
-        name: 'Lightning',
-        type: 'damage',
-        color: 0xf1c40f,
-        cost: 25,
-        damage: 15,
-        element: 'lightning',
-        cooldown: 0
-    },
     'inferno': {
         id: 'inferno',
         name: 'Inferno',
@@ -102,17 +83,6 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         damage: 50,
         element: 'fire',
         emoteSuccess: '🔥',
-        cooldown: 0
-    },
-    'electric_swamp': {
-        id: 'electric_swamp',
-        name: 'Electric Swamp',
-        type: 'damage',
-        color: 0x8e44ad, // Purple
-        cost: 0, // Not purchasable directly
-        damage: 20,
-        element: 'lightning',
-        emoteSuccess: '⚡',
         cooldown: 0
     }
 };

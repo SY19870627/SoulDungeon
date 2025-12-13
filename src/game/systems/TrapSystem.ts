@@ -232,13 +232,6 @@ export class TrapSystem {
                     newCenterTrapId = 'inferno';
                 }
 
-                if ((centerElement === 'water' && (neighborElement === 'lightning' || neighborElement === 'lightning')) ||
-                    ((centerElement === 'lightning' || centerElement === 'lightning') && neighborElement === 'water')) {
-                    synergyFound = true;
-                    newNeighborTrapId = 'electric_swamp';
-                    newCenterTrapId = 'electric_swamp';
-                }
-
                 if (synergyFound) {
                     const newTrapConfig = TRAP_DEFINITIONS[newNeighborTrapId];
                     if (newTrapConfig) {
