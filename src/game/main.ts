@@ -14,6 +14,6 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
             debug: true
         }
     },
-    pixelArt: true,
+    pixelArt: false,
     scene: [MainScene]
 };

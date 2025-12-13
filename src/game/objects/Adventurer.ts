@@ -42,7 +42,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.path = config.path;
 
         // Create Body (Sprite)
-        this.bodySprite = scene.add.sprite(0, 0, 'hero_run_sheet', 0);
+        this.bodySprite = scene.add.sprite(0, 0, 'hero');
         this.bodySprite.setDisplaySize(32, 32); // Adjust size relative to tile (64)
         this.add(this.bodySprite);
 

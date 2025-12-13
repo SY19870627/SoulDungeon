@@ -4,16 +4,20 @@
 
 **核心體驗**：像推骨牌一樣設計連鎖反應，利用貪婪與個性操控冒險者，享受「請君入甕」的快感。
 
-## 0. 當前開發重點：美術素材與動畫實作 (Current Focus: Graphics & Animation)
+## 0. 當前開發重點：美術素材與程式化動畫 (Current Focus: Visual Polish & Programmatic Animation)
 
 根據工作討論結果，優先執行以下繪圖與動畫重構任務：
+
+- [ ] **Implement Tween-based movement (Squash & Stretch) to replace frame animation.**
+
 
 ### 1. 素材準備與匯入 (Assets Preparation)
 - [ ] **下載素材**：下載 Kenney Tiny Dungeon 素材包（或是類似的 16x16 / 32x32 像素地城素材）。
 - [ ] **檔案配置**：
+- [ ] **檔案配置**：
     - 將素材解壓縮至專案的 `public/assets/` 資料夾。
     - 確保有以下關鍵圖片：
-        - `hero_run_sheet.png` (角色的行走動畫圖集)
+        - `hero.png` (角色靜態圖)
         - `floor.png` (地磚)
         - `wall.png` (牆壁)
         - `trap_spike.png` (尖刺陷阱)
@@ -23,14 +27,10 @@
 ### 2. 主場景設定 (MainScene.ts)
 - [ ] **預載資源 (Preload)**：
     - 在 `MainScene` 中新增 `preload()` 方法。
-    - 使用 `this.load.image()` 載入靜態圖片（地磚、牆壁、陷阱）。
-    - 使用 `this.load.spritesheet()` 載入角色動畫圖集（設定正確的 frameWidth 和 frameHeight）。
-- [ ] **建立動畫 (Create Animations)**：
-    - 在 `create()` 方法中，使用 `this.anims.create()` 定義角色的行走動畫：
-        - `run-down` (向下走)
-        - `run-right` (向右走)
-        - `run-up` (向上走)
-    - 設定 `repeat: -1` (無限循環) 與適當的 `frameRate` (如 10)。
+    - 使用 `this.load.image()` 載入靜態圖片（地磚、牆壁、陷阱、角色）。
+- [ ] **移除動畫 (Remove Animations)**：
+    - 移除所有 `this.anims.create()` 呼叫，不再使用 Frame 動畫。
+    - 改為使用程式碼驅動的 Tween 動畫。
 
 ### 3. 冒險者重構 (Adventurer.ts)
 - [ ] **替換幾何圖形**：
@@ -208,6 +208,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 
 *   **視角**：2D 俯視網格 (Top-down Grid)。
 *   **風格**：深色地城風格，搭配高飽和度的霓虹色標示連鎖反應（如毒氣的亮綠、火焰的亮橘），強調「化學反應」的視覺爽感。
+*   **視覺風格 (Visual Style)**：Clean, high-resolution static assets with dynamic code-driven effects (Juice).
 *   **視覺回饋與演出 (Visual Feedback & Performance)**：
     *   **動態演出**：強化物理互動的視覺表現。例如冒險者踩到彈簧板時，應有誇張的「彈飛」動畫軌跡與鏡頭微震，而不只是瞬間位移。
     *   **情緒符號 (Emotes)**：
@@ -248,7 +249,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 
 *   **遊戲引擎 (Game Engine): Phaser 3**
     *   用途：負責核心遊戲畫面（網格地圖、角色移動、物理碰撞、粒子特效）。
-    *   特性：高效能 WebGL 渲染，專為 2D 遊戲設計，適合處理大量精靈與動態效果。
+    *   特性：高效能 WebGL 渲染，專為 2D 遊戲設計，支援 Tween-based animation 與豐富的動態效果。
 
 *   **架構設計 (Architecture): Hybrid**
     *   React 負責 UI 層，Phaser 負責 Game Loop 層，兩者透過 Event System 進行通訊。

@@ -57,18 +57,14 @@ export class MainScene extends Phaser.Scene {
         this.load.image('poison', 'assets/poison.png');
         this.load.image('fan', 'assets/fan.png');
 
-        // Hero Spritesheet (Assuming 16x16 frames, adjust if different)
-        this.load.spritesheet('hero_run_sheet', 'assets/hero_run_sheet.png', {
-            frameWidth: 16,
-            frameHeight: 16
-        });
+        // Hero Static Asset
+        this.load.image('hero', 'assets/hero.png');
     }
 
     create() {
         // Animations
-        // Animations - DEPRECATED for Board Game Style
-        // this.anims.create({ ... }); 
-        // Using static frames instead.
+        // Animations - DEPRECATED
+        // No longer using frame animations. Using Tweens.
 
         // Calculate offsets to center the grid
         const gridWidth = 10;

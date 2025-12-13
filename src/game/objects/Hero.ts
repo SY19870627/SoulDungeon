@@ -19,7 +19,7 @@ export class Hero extends Phaser.GameObjects.Container {
         this.gridY = 0;
 
         // Visuals - Board Game Piece Style
-        this.bodySprite = scene.add.sprite(0, 0, 'hero_run_sheet', 0);
+        this.bodySprite = scene.add.sprite(0, 0, 'hero');
         this.bodySprite.setDisplaySize(48, 48);
         this.add(this.bodySprite);
 
@@ -139,6 +139,17 @@ export class Hero extends Phaser.GameObjects.Container {
                 duration: 150,
                 yoyo: true,
                 ease: 'Sine.easeOut'
+            });
+
+            // Squash & Stretch (Juice)
+            this.scene.tweens.add({
+                targets: this.bodySprite,
+                scaleX: 1.2,
+                scaleY: 0.8,
+                duration: 100,
+                yoyo: true,
+                repeat: 0,
+                ease: 'Sine.easeInOut'
             });
         });
     }

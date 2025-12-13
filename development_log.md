@@ -123,6 +123,17 @@
 ### 11. System Simplification: Elemental Redundancy Removal (2025-12-13)
 -   **Topic**: System Simplification: Elemental Redundancy Removal.
 -   **Changes**:
-    -   Removed redundant elemental traps (Water, Lightning, Poison, Fan) to declutter the gameplay loop.
     -   Refactored `TrapSystem` and `TrapRegistry` to support only the core Oil+Fire synergy.
     -   Shifted design focus towards Physics interactions (Movement/Displacement) over static elemental combos.
+
+### 12. Architectural Pivot (Visual Style)
+-   **Decision**: Abandoned pixel art sprite sheets in favor of **Programmatic Animation (Tweens)**.
+-   **Benefits**:
+    -   Reduced asset dependency (no need to draw every frame).
+    -   Easier to implement "Juicy" effects (Squash & Stretch) via code.
+    -   Higher fidelity (resolution independent).
+-   **Implementation**:
+    -   Replaced `spritesheet` loading with `load.image`.
+    -   Removed `Animation Manager` setup in `MainScene`.
+    -   Implemented `Squash & Stretch` scaling tweens in `Hero` movement logic.
+
