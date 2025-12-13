@@ -97,17 +97,18 @@ export class DungeonRenderer {
                     // Map trap type to texture key
                     let textureKey = 'trap_spike';
                     if (cell.trap.config.id) {
-                        // Use ID if available and matches asset names
-                        if (cell.trap.config.id === 'trap_spring') textureKey = 'trap_spring';
-                        else if (cell.trap.config.id === 'trap_spike') textureKey = 'trap_spike';
-                        else {
-                            // Fallback to type mapping or raw id if it matches asset
-                            // Check for element types
-                            if (['oil', 'fire', 'lightning', 'water', 'poison', 'fan'].includes(cell.trap.config.id)) {
-                                textureKey = cell.trap.config.id;
-                            } else {
-                                textureKey = 'trap_spike'; // Ultimate fallback
-                            }
+                        const id = cell.trap.config.id;
+                        // Direct mapping
+                        if (id === 'spike') textureKey = 'trap_spike';
+                        else if (id === 'spring') textureKey = 'trap_spring';
+                        else if (id === 'bear_trap') textureKey = 'trap_bear';
+                        else if (id === 'rune') textureKey = 'trap_rune';
+                        else if (id === 'burning_oil') textureKey = 'burning_oil';
+                        else if (['oil', 'fire', 'lightning', 'water', 'poison', 'fan'].includes(id)) {
+                            textureKey = id;
+                        } else {
+                            // Fallback
+                            textureKey = 'trap_spike';
                         }
                     }
 

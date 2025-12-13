@@ -37,10 +37,15 @@ export class MainScene extends Phaser.Scene {
         this.load.image('wall', 'assets/wall.png');
         this.load.image('trap_spike', 'assets/trap_spike.png');
         this.load.image('trap_spring', 'assets/trap_spring.png');
+        this.load.image('trap_bear', 'assets/trap_bear.png'); // New
+        this.load.image('trap_rune', 'assets/trap_rune.png'); // New
 
         // Elements
         this.load.image('oil', 'assets/oil.png');
         this.load.image('fire', 'assets/fire.png');
+        this.load.image('burning_oil', 'assets/burning_oil.png'); // New
+
+        // Element Fallbacks/Renamed?
         this.load.image('lightning', 'assets/lightning.png');
         this.load.image('water', 'assets/water.png');
         this.load.image('poison', 'assets/poison.png');
