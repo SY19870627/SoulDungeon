@@ -17,6 +17,7 @@ export class DungeonRenderer {
 
     private trapGroup: Phaser.GameObjects.Group;
     private trapSprites: Map<string, Phaser.GameObjects.Sprite>;
+    private entranceSprite: Phaser.GameObjects.Sprite | null = null;
 
     constructor(scene: Phaser.Scene, gridSystem: GridSystem) {
         this.scene = scene;
@@ -48,10 +49,16 @@ export class DungeonRenderer {
             }
         }
 
-        // Draw Start marker
+        // Draw Start marker (Entrance)
         const startOrigin = this.gridSystem.getGridOrigin(startPos.x, startPos.y);
-        this.gridGraphics.fillStyle(0x00ff00, 0.5);
-        this.gridGraphics.fillRect(startOrigin.x, startOrigin.y, tileSize, tileSize);
+
+        if (this.entranceSprite) {
+            this.entranceSprite.destroy();
+        }
+
+        this.entranceSprite = this.scene.add.sprite(startOrigin.x + tileSize / 2, startOrigin.y + tileSize / 2, 'entrance');
+        this.entranceSprite.setDisplaySize(tileSize, tileSize);
+        this.entranceSprite.setDepth(DungeonRenderer.DEPTH_GRID + 1); // Slightly above grid lines
     }
 
     public drawWalls() {

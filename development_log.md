@@ -220,3 +220,7 @@
 ### 26. UI Cleanup
 - **Changes**: Removed the yellow/cyan pathfinding preview line and the fixed red endpoint marker.
 - **Reasoning**: The game has shifted from "Fixed Path TD" to "Dynamic Roaming Survival". Visualizing a single static path is misleading when adventurers are actively roaming, rerouting, and exploring.
+
+### 27. Visual Polish - Entrance Asset
+- **Change**: Replaced the generic green tile marker for the Entrance with a dedicated PNG asset (`entrance.png`).
+- **Implementation**: Updated `DungeonRenderer` to render a sprite instead of a colored rectangle at the start position.

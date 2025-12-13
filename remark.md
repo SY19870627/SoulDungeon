@@ -198,6 +198,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 *   **視角**：2D 俯視網格 (Top-down Grid)。
 *   **風格**：深色地城風格，搭配高飽和度的霓虹色標示連鎖反應（如毒氣的亮綠、火焰的亮橘），強調「化學反應」的視覺爽感。
 *   **視覺風格 (Visual Style)**：Clean, high-resolution static assets with dynamic code-driven effects (Juice).
+    *   **Entrance**: Replaced basic green tile with high-fidelity `Entrance.png`.
 *   **視覺回饋與演出 (Visual Feedback & Performance)**：
     *   **動態演出**：強化物理互動的視覺表現。例如冒險者踩到彈簧板時，應有誇張的「彈飛」動畫軌跡與鏡頭微震，而不只是瞬間位移。
     *   **情緒符號 (Emotes)**：
