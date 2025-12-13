@@ -274,3 +274,13 @@
 - **Change**: Translated Main UI (`App.tsx`) and Trap Names (`TrapRegistry.ts`) to Traditional Chinese.
 - **Reason**: Enhancing accessibility for localized audience.
 
+### 39. Phase Adjustment: Web Deployment Preparation
+- **Strategy**: Pivoted to a **Hybrid Deployment Strategy** (Web/Electron).
+- **Action**: Created `build:web` pipeline (`tsc && vite build`) to generate a static web build compatible with Netlify.
+- **Goal**: Enable rapid alpha testing via web browser while keeping the Electron architecture for the final Steam release.
+- **Tech**: Confirmed `localStorage` will be used for cross-platform save data compatibility.
+
+### 40. Workflow Update: Web-First Development
+- **Action**: Added `dev:web` script (`vite`) to `package.json`.
+- **Benfit**: Allows standard browser development (Chrome) for faster iteration, treating Electron as a secondary release target.
+

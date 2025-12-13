@@ -56,6 +56,8 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 玩家扮演一位「地城經營者」，但不同於傳統遊戲依靠強大的怪物硬碰硬，本作的核心在於**「動線設計」與「心理操控」**。
 玩家需要針對不同個性的冒險者，利用地形、誘餌、化學元素與物理陷阱，設計出一套完美的「死亡動線」，收割靈魂並變賣冒險者的裝備。
 
+> **Alpha Testing Strategy**: The immediate goal is to deploy a playable Web Build to **Netlify** for rapid user feedback, while maintaining the Electron architecture for the eventual Steam release.
+
 ## 2. 核心循環 (Core Loop)
 
 ### 選址 (Map Selection)
@@ -236,9 +238,9 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 
 為了滿足 Steam 上架需求、複雜的 UI 交互（多視窗/頁面管理）以及豐富的視聽效果，本專案將採用以下現代化 Web 技術堆疊進行開發：
 
-*   **核心運行 (Runtime): Electron**
-    *   用途：將 Web 應用封裝為桌面執行檔 (.exe)，支援 Steam 上架與本機檔案讀寫。
-    *   特性：原生多視窗支援，適合複雜的經營管理介面。
+*   **核心運行 (Runtime): Hybrid (Web for Testing / Electron for Steam release)**
+    *   用途：將 Web 應用封裝為桌面執行檔 (.exe) 支援 Steam 上架，同時支援透過瀏覽器進行快速測試發布 (Netlify)。
+    *   特性：原生多視窗支援 (Electron)，跨平台相容性 (Web)。
 
 *   **建置工具 (Build): Vite**
     *   用途：極速開發伺服器與模組打包。
@@ -254,6 +256,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 
     *   React 負責 UI 層，Phaser 負責 Game Loop 層，兩者透過 Event System 進行通訊。
     *   **AI Logic**: Deterministic (No RNG in Pathfinding) to allow predictable trap interactions.
+    *   **Storage Strategy**: Game data (save files) will use `localStorage` to support both Web and Desktop environments seamlessly.
 
 ## Adventurer AI System v2: The "Smart Mouse" Logic
 - **Core Concept**: Adventurers now behave like mice in a maze that learn from pain.
