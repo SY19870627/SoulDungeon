@@ -12,6 +12,7 @@ export interface TrapConfig {
     pushDistance?: number;
     emoteSuccess?: string;
     emoteFail?: string;
+    isScary?: boolean; // If true, triggers anxiety logic (panic). If false, adventurers walk into it.
 
     // Component System
     components?: {

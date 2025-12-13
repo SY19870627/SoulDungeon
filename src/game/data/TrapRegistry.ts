@@ -9,6 +9,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         cost: 20,
         damage: 30,
         emoteSuccess: '😖',
+        isScary: true,
         cooldown: 0,
         components: {
             triggers: [{ type: 'onStep' }],
@@ -23,6 +24,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         cost: 25,
         damage: 15,
         emoteSuccess: '🗯️',
+        isScary: true,
         cooldown: 5, // Single use? Or cooldown. Components handle logic.
         components: {
             triggers: [{ type: 'onStep' }],
@@ -53,6 +55,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         pushDistance: 2,
         emoteSuccess: '😱',
         emoteFail: '🤕',
+        isScary: false,
         cooldown: 0
     },
     'oil': {
@@ -72,6 +75,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         cost: 15,
         damage: 10,
         element: 'fire',
+        isScary: true,
         cooldown: 0
     },
     'burning_oil': {
@@ -83,6 +87,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         damage: 50,
         element: 'fire',
         emoteSuccess: '🔥',
+        isScary: true,
         cooldown: 0
     }
 };

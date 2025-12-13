@@ -191,3 +191,11 @@
   - **Memory**: Once detected, the trap is added to `knownTraps`.
   - **Rerouting**: Updated Pathfinding to support `excludeNodes` (known traps) and `preferredNodes` (visited tiles). AI now prefers retracing steps to find alternate routes rather than risking unknown tiles immediately.
 - **Goal**: Simulation of cautious exploration and fear.
+
+### 22. Refined Trap Anxiety Logic (Fear Differentiation)
+- **Problem**: Adventurers were getting scared of Spring traps, which doesn't make sense (they should just walk into them).
+- **Solution**: Introduced `isScary` flag in `TrapConfig`.
+- **Implementation**:
+  - `Spike`, `Fire`, `Bear Trap`: `isScary: true` -> Triggers Panic & Stamina Burn.
+  - `Spring`: `isScary: false` -> Ignored by anxiety logic. Adventurers walk blindly into them.
+- **Outcome**: Adventurers now intelligently avoid dangerous traps but fall for utility traps.

@@ -166,15 +166,40 @@ export class Adventurer extends Phaser.GameObjects.Container {
         const cell = this.gridSystem.getCell(targetX, targetY);
         const key = `${targetX},${targetY}`;
 
-        if (cell && cell.trap && !this.knownTraps.has(key)) {
-            // Trap detected!
-            this.stamina -= 5;
-            this.updateStaminaBar();
-            this.showEmote('😨');
-            this.knownTraps.add(key);
-            console.log(`Adventurer ${this.id} spotted trap at ${key}! Panic!`);
-            this.enterPanic();
-            return true;
+        if (cell && cell.trap) {
+            // Check if we already know about this specific trap location
+            if (this.knownTraps.has(key)) {
+                // We know it's there. 
+                // If it's SCARY, we should avoid it (logic handled by pathfinding excludeNodes).
+                // If we are HERE in checkForTrap, it might mean we are trying to walk into it regardless?
+                // But usually move() calls this. If pathfinding works, we shouldn't be here for a known scary trap.
+                // UNLESS pathfinding failed to find a safe path and we are forced to walk into it?
+                // For now, let's treat "known" traps as "scary -> panic" only if we didn't expect to walk into them.
+                // But simpler: If it's scary and we are about to step on it, PANIC.
+
+                if (cell.trap.config.isScary) {
+                    // actually if we know it, we probably shouldn't be stepping on it unless we are forced.
+                    // But let's keep the logic simple: Scared of Scary traps.
+                    return true;
+                }
+            } else {
+                // Unknown trap.
+                if (cell.trap.config.isScary) {
+                    // Scary trap discovered!
+                    this.stamina -= 5;
+                    this.updateStaminaBar();
+                    this.showEmote('😨');
+                    this.knownTraps.add(key);
+                    console.log(`Adventurer ${this.id} spotted SCARY trap at ${key}! Panic!`);
+                    this.enterPanic();
+                    return true;
+                } else {
+                    // Not scary (e.g. Spring). Ignore it.
+                    // Adventurer will walk onto it.
+                    console.log(`Adventurer ${this.id} spotted non-scary trap at ${key}. Ignoring.`);
+                    return false;
+                }
+            }
         }
         return false;
     }
