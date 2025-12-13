@@ -224,3 +224,10 @@
 ### 27. Visual Polish - Entrance Asset
 - **Change**: Replaced the generic green tile marker for the Entrance with a dedicated PNG asset (`entrance.png`).
 - **Implementation**: Updated `DungeonRenderer` to render a sprite instead of a colored rectangle at the start position.
+
+### 28. Mechanics - Panic Retreat & Bounty System
+- **Feature**: Exhausted adventurers now attempt to flee back to the entrance instead of vanishing.
+- **Behavior**: Upon reaching 0 Stamina, they regain 50% stamina, speed increases by 1.5x, and they run towards the spawn point.
+- **Visuals**: Fleeing units trigger '😱' emote and are tinted Pale Blue.
+- **Economy**: Killing a fleeing unit yields **Double Gold** (20g). If they escape, the player gets nothing.
+- **Strategy**: Adds a "Mercy Kill" window where high-risk play is rewarded.

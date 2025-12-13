@@ -47,6 +47,10 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private isPanicAnimating: boolean = false;
     private panicTimer: number = 0;
 
+    // Flee Logic
+    public isFleeing: boolean = false;
+    private spawnPoint: { x: number, y: number };
+
     // Visuals
     private bodySprite: Phaser.GameObjects.Sprite;
     private healthBar: HealthBar;
@@ -69,6 +73,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
         // Initialize Visited
         const startGrid = this.gridSystem.worldToGrid(x, y);
+        this.spawnPoint = { x, y }; // Store spawn point
         if (startGrid) {
             this.visitedTiles.add(`${startGrid.x},${startGrid.y}`);
         }
@@ -237,7 +242,11 @@ export class Adventurer extends Phaser.GameObjects.Container {
                 this.panicTimer -= 1.0;
                 this.consumeStamina();
                 if (this.stamina <= 0) {
-                    return { reachedEnd: false, enteredNewTile: false };
+                    if (!this.isFleeing) {
+                        this.startFleeing();
+                    } else {
+                        return { reachedEnd: false, enteredNewTile: false }; // Wait for regular move consumer
+                    }
                 }
             }
         }
@@ -305,6 +314,15 @@ export class Adventurer extends Phaser.GameObjects.Container {
         if (this.pauseTimer > 0) {
             this.pauseTimer -= dt;
             return { reachedEnd: false, enteredNewTile: false };
+        }
+
+        // Flee Check: Reached Spawn Point? (Approximation)
+        if (this.isFleeing) {
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, this.spawnPoint.x, this.spawnPoint.y);
+            if (dist < 10) { // Close enough
+                this.escape();
+                return { reachedEnd: true, enteredNewTile: false };
+            }
         }
 
         // 4. Check Path End / Need New Path
@@ -439,7 +457,11 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.updateStaminaBar();
 
         if (this.stamina <= 0) {
-            this.expire();
+            if (!this.isFleeing) {
+                this.startFleeing();
+            } else {
+                this.expire(); // Die if exhausted while fleeing
+            }
         }
     }
 
@@ -453,7 +475,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         if (this.isDying) return;
         console.log(`Adventurer ${this.id} EXHAUSTED/EXPIRED (0 Gold).`);
         this.isDying = true;
-        this.showEmote('💤');
+        this.showEmote('💀'); // Dead icon for real expiry
 
         // Fade out
         this.scene.tweens.add({
@@ -464,6 +486,64 @@ export class Adventurer extends Phaser.GameObjects.Container {
                 this.destroy(); // Just destroy, no callback
             }
         });
+    }
+
+    public startFleeing() {
+        if (this.isFleeing) return;
+        this.isFleeing = true;
+        this.isPanic = false; // Override panic freezing
+        this.stamina = this.maxStamina / 2; // Restore 50%
+        this.speed *= 1.5; // Panic run
+
+        this.showEmote('😱', 60000); // Scream
+        this.bodySprite.setTint(0x8888ff); // Pale blue
+
+        console.log(`Adventurer ${this.id} is FLEEING! Target: Spawn Point.`);
+
+        // Find path home
+        const currentGrid = this.gridSystem.worldToGrid(this.x, this.y);
+        const homeGrid = this.gridSystem.worldToGrid(this.spawnPoint.x, this.spawnPoint.y);
+
+        if (currentGrid && homeGrid) {
+            this.path = []; // Clear current path
+            // We ignore visited tiles logic for fleeing - just run shortest path
+            const newPath = this.pathfinding.findPath(
+                currentGrid,
+                homeGrid,
+                new Set(), // No exclusions (desperate) - actually, should we respect walls? 
+                // findPath usually respects walls via A*. excludNodes is for traps.
+                // So this will find valid path ignoring traps (too scared to care?)
+                // Or pass 'knownTraps' to still avoid them? 
+                // Let's pass empty to imply "Running Blindly" -> High Risk!
+                undefined
+            );
+            if (newPath.length > 0) {
+                this.path = newPath;
+            } else {
+                console.log("Fleeing blocked! Adventurer is doomed.");
+                // They will wander until stamina 0 again
+            }
+        }
+    }
+
+    public escape() {
+        if (this.isDying) return;
+        console.log(`Adventurer ${this.id} ESCAPED (0 Gold).`);
+        this.isDying = true;
+
+        this.scene.tweens.add({
+            targets: this,
+            alpha: 0,
+            scale: 0,
+            duration: 500,
+            onComplete: () => {
+                this.destroy();
+            }
+        });
+    }
+
+    public getBountyMultiplier(): number {
+        return this.isFleeing ? 2 : 1;
     }
 
     public teleport(x: number, y: number, newPath: { x: number, y: number }[]) {

@@ -133,9 +133,10 @@ export class WaveManager {
             adv.destroy(); // Remove visual
             this.adventurers.splice(index, 1);
             if (this.economyManager) {
-                this.economyManager.addGold(10);
+                const reward = 10 * adv.getBountyMultiplier();
+                this.economyManager.addGold(reward);
+                console.log(`Adventurer died (Killed)! Gold Awarded: ${reward} (Multiplier: ${adv.getBountyMultiplier()}x)`);
             }
-            console.log('Adventurer died (Killed)! Gold Awarded.');
         }
     }
 

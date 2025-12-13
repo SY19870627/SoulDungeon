@@ -102,6 +102,10 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 
 ### B. 冒險者 AI 與個性 (Adventurer Psychology)
 冒險者不再是衝向終點的機器人，而是**有體力的探索者**。
+*   **體力 (Stamina)**：
+    *   移動、受傷、恐慌皆會消耗體力。
+    *   **Panic Retreat (慌亂撤退)**：當體力歸零時，冒險者不會直接消失，而是回復 50% 體力並進入慌亂狀態 (Fleeing)，試圖逃回入口。
+    *   **Double Bounty**: 若玩家成功擊殺處於 Fleeing 狀態的冒險者，獲得 **2x 金幣**。若其成功逃脫，則無獎勵。
 
 *   **體力系統 (Stamina)**：
     *   **焦慮燃燒 (Anxiety Burn)**：遭遇新陷阱時觸發恐慌，額外消耗 5 點體力。
