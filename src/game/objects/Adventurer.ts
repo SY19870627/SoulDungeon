@@ -118,6 +118,14 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.healthBarFg.scaleX = percent;
     }
 
+    public applyStatus(type: string, duration: number) {
+        console.log(`Adventurer ${this.id} applied status: ${type} for ${duration}s`);
+        if (type === 'root') {
+            this.pauseTimer += duration;
+            this.showEmote('🛑');
+        }
+    }
+
     public move(dt: number, gridSystem: any): { reachedEnd: boolean, enteredNewTile: boolean } {
         if (this.isJumping) return { reachedEnd: false, enteredNewTile: false };
 

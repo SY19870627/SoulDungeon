@@ -9,7 +9,40 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         cost: 20,
         damage: 30,
         emoteSuccess: '😖',
-        cooldown: 0
+        cooldown: 0,
+        components: {
+            triggers: [{ type: 'onStep' }],
+            effects: [{ type: 'physical_damage' }]
+        }
+    },
+    'bear_trap': {
+        id: 'bear_trap',
+        name: 'Bear Trap',
+        type: 'damage', // Logic type
+        color: 0x553311, // Brown
+        cost: 25,
+        damage: 15,
+        emoteSuccess: '🗯️',
+        cooldown: 5, // Single use? Or cooldown. Components handle logic.
+        components: {
+            triggers: [{ type: 'onStep' }],
+            effects: [
+                { type: 'physical_damage', config: { damage: 15 } },
+                { type: 'root', config: { duration: 2.5 } }
+            ]
+        }
+    },
+    'rune': {
+        id: 'rune',
+        name: 'Magic Rune',
+        type: 'elemental',
+        color: 0x00ffff, // Cyan
+        cost: 40,
+        cooldown: 5,
+        components: {
+            triggers: [{ type: 'proximity', config: { radius: 1.5 } }],
+            effects: [{ type: 'area_magic', config: { radius: 2.5, damage: 20 } }]
+        }
     },
     'spring': {
         id: 'spring',

@@ -224,6 +224,8 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 ## 6. 開發階段規劃 (Roadmap)
 
 *   **Phase 1**：網格地圖、障礙物生成、基礎化學連鎖 (油+火, 水+雷)。
+    *   **New**: 實作基礎陷阱系統架構（Trigger/Effect 分離模式）。
+    *   **New**: 實作基礎地刺陷阱、捕獸夾與符文陷阱原型。
 *   **Phase 2**：物理位移 (彈簧)、假人模擬、連擊判定。
 *   **Phase 3**：冒險者 AI (騎士/貪吃/盜賊)、誘餌系統、傷害數值化。
 *   **Phase 4**：

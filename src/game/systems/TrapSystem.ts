@@ -2,8 +2,14 @@ import { Adventurer } from '../objects/Adventurer';
 import { Trap, GridSystem } from './GridSystem';
 import { Pathfinding } from './Pathfinding';
 import { TRAP_DEFINITIONS } from '../data/TrapRegistry';
+import { ITrapTrigger, ITrapEffect, TriggerContext } from '../traps/TrapInterfaces';
+import { OnStepTrigger } from '../traps/triggers/OnStepTrigger';
+import { ProximityTrigger } from '../traps/triggers/ProximityTrigger';
+import { PhysicalDamageEffect } from '../traps/effects/PhysicalDamageEffect';
+import { RootEffect } from '../traps/effects/RootEffect';
+import { AreaMagicEffect } from '../traps/effects/AreaMagicEffect';
 
-export type TrapEffect = (
+export type LegacyTrapEffect = (
     adventurer: Adventurer,
     trap: Trap,
     dt: number,
@@ -15,15 +21,26 @@ export type TrapEffect = (
 ) => void;
 
 export class TrapSystem {
-    private effects: Record<string, TrapEffect> = {};
+    private legacyEffects: Record<string, LegacyTrapEffect> = {};
+    private triggers: Record<string, ITrapTrigger> = {};
+    private effects: Record<string, ITrapEffect> = {};
 
     constructor() {
-        this.registerDefaultEffects();
+        this.registerLegacyEffects();
+        this.registerComponents();
     }
 
-    private registerDefaultEffects() {
-        this.effects['damage'] = (adv, trap, dt) => {
-            // Flat damage on entry
+    private registerComponents() {
+        this.triggers['onStep'] = new OnStepTrigger();
+        this.triggers['proximity'] = new ProximityTrigger();
+
+        this.effects['physical_damage'] = new PhysicalDamageEffect();
+        this.effects['root'] = new RootEffect();
+        this.effects['area_magic'] = new AreaMagicEffect();
+    }
+
+    private registerLegacyEffects() {
+        this.legacyEffects['damage'] = (adv, trap, dt) => {
             const damage = trap.config.damage || 0;
             console.log(`${trap.config.name} trap dealing ${damage} damage to ${adv.id}`);
             adv.takeDamage(damage);
@@ -32,7 +49,7 @@ export class TrapSystem {
             }
         };
 
-        this.effects['physics'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
+        this.legacyEffects['physics'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
             const direction = trap.direction || 'up';
             const pushDistance = trap.config.pushDistance || 0;
             let dx = 0;
@@ -49,46 +66,59 @@ export class TrapSystem {
             const targetX = currentGrid.x + dx;
             const targetY = currentGrid.y + dy;
 
-            // Check bounds and walls
             if (gridSystem.isWalkable(targetX, targetY)) {
-                // Valid jump
                 console.log(`${trap.config.name}! Jumping to ${targetX}, ${targetY}`);
                 if (trap.config.emoteSuccess) {
                     adv.showEmote(trap.config.emoteSuccess);
                 }
 
-                // Teleport
                 const targetWorld = gridSystem.gridToWorld(targetX, targetY);
 
-                // Use Jump Animation
                 adv.jumpTo(targetWorld.x, targetWorld.y, 500, () => {
-                    // Recalculate Path
                     const newPath = pathfinding.findPath({ x: targetX, y: targetY }, endPos);
 
                     if (newPath.length > 0) {
                         adv.teleport(targetWorld.x, targetWorld.y, newPath);
                     } else {
-                        console.log('No path from jump target!');
-                        adv.teleport(targetWorld.x, targetWorld.y, []); // Stop moving
+                        adv.teleport(targetWorld.x, targetWorld.y, []);
                     }
 
-                    // Check for trap at landing position (Recursive Trigger)
                     const landingCell = gridSystem.getCell(targetX, targetY);
                     if (landingCell && landingCell.trap) {
-                        console.log('Landed on another trap!');
                         trapSystem.trigger(adv, landingCell.trap, dt, gridSystem, pathfinding, endPos, depth + 1);
                     }
                 });
 
             } else {
-                // Hit a wall or out of bounds
                 console.log('Spring blocked!');
                 if (trap.config.emoteFail) {
                     adv.showEmote(trap.config.emoteFail);
                 }
-                adv.takeDamage(20); // Collision damage could also be config based later
+                adv.takeDamage(20);
             }
         };
+    }
+
+    public update(dt: number, gridSystem: GridSystem, adventurers: Adventurer[], pathfinding: Pathfinding, endPos: { x: number, y: number }) {
+        const width = gridSystem.getWidth();
+        const height = gridSystem.getHeight();
+
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const cell = gridSystem.getCell(x, y);
+                if (cell && cell.trap) {
+                    const trap = cell.trap;
+
+                    if (trap.cooldownTimer > 0) {
+                        trap.cooldownTimer -= dt;
+                    }
+
+                    if (trap.config.components && trap.cooldownTimer <= 0) {
+                        this.processTriggers(trap, adventurers, gridSystem, 'update', dt, pathfinding, endPos);
+                    }
+                }
+            }
+        }
     }
 
     public trigger(
@@ -100,14 +130,72 @@ export class TrapSystem {
         endPos: { x: number, y: number },
         depth: number = 0
     ) {
-        if (depth > 5) {
-            console.warn('Trap recursion depth exceeded!');
-            return;
-        }
+        if (depth > 5) return;
 
-        const effect = this.effects[trap.config.type];
-        if (effect) {
-            effect(adv, trap, dt, gridSystem, pathfinding, endPos, this, depth);
+        if (trap.cooldownTimer > 0) return;
+
+        if (trap.config.components) {
+            this.processTriggers(trap, [adv], gridSystem, 'enter', dt, pathfinding, endPos);
+        } else {
+            const effect = this.legacyEffects[trap.config.type];
+            if (effect) {
+                effect(adv, trap, dt, gridSystem, pathfinding, endPos, this, depth);
+            }
+        }
+    }
+
+    private processTriggers(
+        trap: Trap,
+        adventurers: Adventurer[],
+        gridSystem: GridSystem,
+        context: TriggerContext,
+        dt: number,
+        pathfinding: Pathfinding,
+        endPos: { x: number, y: number }
+    ) {
+        if (!trap.config.components) return;
+
+        for (const triggerDef of trap.config.components.triggers) {
+            const trigger = this.triggers[triggerDef.type];
+            if (trigger) {
+                let triggered = false;
+                let triggeringAdventurer: Adventurer | null = null;
+
+                for (const adv of adventurers) {
+                    if (trigger.shouldTrigger(trap, adv, gridSystem, context)) {
+                        triggered = true;
+                        triggeringAdventurer = adv;
+                        break;
+                    }
+                }
+
+                if (triggered && triggeringAdventurer) {
+                    this.fireEffects(trap, triggeringAdventurer, gridSystem, dt, adventurers, pathfinding);
+
+                    if (trap.config.cooldown) {
+                        trap.cooldownTimer = trap.config.cooldown;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    private fireEffects(
+        trap: Trap,
+        primaryTarget: Adventurer,
+        gridSystem: GridSystem,
+        dt: number,
+        allAdventurers: Adventurer[],
+        pathfinding: Pathfinding
+    ) {
+        if (!trap.config.components) return;
+
+        for (const effectDef of trap.config.components.effects) {
+            const effect = this.effects[effectDef.type];
+            if (effect) {
+                effect.apply(trap, primaryTarget, gridSystem, pathfinding, this, dt, allAdventurers);
+            }
         }
     }
 
@@ -137,7 +225,6 @@ export class TrapSystem {
                 let synergyFound = false;
                 let newNeighborTrapId = '';
 
-                // Inferno: Oil + Fire (or Inferno)
                 if ((centerElement === 'oil' && (neighborElement === 'fire' || neighborElement === 'fire')) ||
                     ((centerElement === 'fire' || centerElement === 'fire') && neighborElement === 'oil')) {
                     synergyFound = true;
@@ -145,7 +232,6 @@ export class TrapSystem {
                     newCenterTrapId = 'inferno';
                 }
 
-                // Electric Swamp: Water + Lightning (or Electric Swamp)
                 if ((centerElement === 'water' && (neighborElement === 'lightning' || neighborElement === 'lightning')) ||
                     ((centerElement === 'lightning' || centerElement === 'lightning') && neighborElement === 'water')) {
                     synergyFound = true;
@@ -154,22 +240,11 @@ export class TrapSystem {
                 }
 
                 if (synergyFound) {
-                    // Upgrade Neighbor
-                    // We need to construct a new Trap object. 
-                    // Since we don't have the full TRAP_DEFINITIONS here easily without importing, 
-                    // let's assume we can import it.
-                    // But to avoid circular dependency issues if TrapRegistry imports GridSystem (it doesn't),
-                    // we should be fine.
-
-                    // Actually, let's just use the ID and let the caller handle it? 
-                    // No, this method is static, it should do the work.
-                    // We need to import TRAP_DEFINITIONS.
-
                     const newTrapConfig = TRAP_DEFINITIONS[newNeighborTrapId];
                     if (newTrapConfig) {
                         console.log(`Upgrading neighbor at ${n.x},${n.y} to ${newNeighborTrapId}`);
                         gridSystem.removeTrap(n.x, n.y);
-                        gridSystem.placeTrap(n.x, n.y, { config: newTrapConfig, type: newTrapConfig.type });
+                        gridSystem.placeTrap(n.x, n.y, { config: newTrapConfig, type: newTrapConfig.type, cooldownTimer: 0, x: n.x, y: n.y });
                     }
                     upgradeCenter = true;
                 }
@@ -181,7 +256,7 @@ export class TrapSystem {
             if (newTrapConfig) {
                 console.log(`Upgrading center at ${x},${y} to ${newCenterTrapId}`);
                 gridSystem.removeTrap(x, y);
-                gridSystem.placeTrap(x, y, { config: newTrapConfig, type: newTrapConfig.type });
+                gridSystem.placeTrap(x, y, { config: newTrapConfig, type: newTrapConfig.type, cooldownTimer: 0, x, y });
             }
         }
     }

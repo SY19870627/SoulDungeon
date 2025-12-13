@@ -12,6 +12,12 @@ export interface TrapConfig {
     pushDistance?: number;
     emoteSuccess?: string;
     emoteFail?: string;
+
+    // Component System
+    components?: {
+        triggers: { type: string, config?: any }[];
+        effects: { type: string, config?: any }[];
+    };
 }
 
 export interface Trap {
@@ -19,6 +25,9 @@ export interface Trap {
     config: TrapConfig;
     // Dynamic state
     direction?: 'up' | 'down' | 'left' | 'right';
+    cooldownTimer: number; // For cooldown management
+    x: number;
+    y: number;
     // We can keep these for backward compatibility or convenience, 
     // but eventually they should come from config
     type: string;

@@ -105,3 +105,17 @@
     *   Deprecated Frame-by-Frame animations to reduce asset dependency (Board Game Style).
     *   Refactored `Hero` and `Adventurer` to use Tween-based "Board Game Style" movement (Hop/Jump).
     *   Implemented procedural visual feedback for Attack (Lunge), Damage (Flash/Shake), and Death (Topple).
+
+### 10. Trap System Architecture - Component Pattern (2025-12-13)
+*   **Topic**: Trap System Refactoring - Trigger/Effect Separation.
+*   **Architecture**:
+    *   **Components**: Traps now use a flexible `Trigger` + `Effect` component system (`TrapConfig.components`).
+    *   **Triggers**: Implemented `OnStepTrigger` (Event-driven) and `ProximityTrigger` (Update-driven).
+    *   **Effects**: Implemented `PhysicalDamageEffect`, `RootEffect` (Status), and `AreaMagicEffect` (AoE).
+*   **Prototypes**:
+    *   **Spike Trap**: Migrated to Component system (OnStep + Damage).
+    *   **Bear Trap**: Added logic (OnStep + Damage + Root).
+    *   **Magic Rune**: Added logic (Proximity + AoE Magic).
+*   **Refactoring**:
+    *   Updated `TrapSystem` to support both legacy hardcoded effects (Spring) and new component-based traps simultaneously.
+    *   Updated `WaveManager` to driver trap updates for proximity detection.

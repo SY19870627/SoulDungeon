@@ -79,6 +79,9 @@ export class WaveManager {
     public update(time: number, delta: number) {
         const dt = delta / 1000; // seconds
 
+        // Update Trap System (Proximity Triggers / Cooldowns)
+        this.trapSystem.update(dt, this.gridSystem, this.adventurers, this.pathfinding, this.endPos);
+
         for (let i = this.adventurers.length - 1; i >= 0; i--) {
             const adv = this.adventurers[i];
 

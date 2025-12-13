@@ -28,7 +28,10 @@ export class TrapTool implements Tool {
             const newTrap: Trap = {
                 config: this.trapConfig,
                 direction: 'up',
-                type: this.trapConfig.type
+                type: this.trapConfig.type,
+                cooldownTimer: 0,
+                x: gridX,
+                y: gridY
             };
 
             if (this.scene.getGridSystem().placeTrap(gridX, gridY, newTrap)) {
