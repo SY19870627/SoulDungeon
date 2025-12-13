@@ -11,6 +11,7 @@
 - [ ] **Implement Tween-based movement (Squash & Stretch) in Adventurer class.**
 - [ ] **Disable pixelArt mode for smoother tween rendering.**
 - [ ] **Refactor Adventurer movement to use "Juice" effects (Wobble, Squash).**
+- [x] **介面中文化 (Localization)**: 將遊戲主介面與陷阱名稱翻譯為繁體中文。
 
 ### 1. 視覺架構調整 (Visual Architecture Pivot)
 - [x] **Drop Sprite Sheets**: Stop using `spritesheet` loading for characters. Use static images.

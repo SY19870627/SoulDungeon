@@ -46,12 +46,12 @@ function App() {
                 borderRight: '1px solid #555',
                 zIndex: 10
             }}>
-                <h2 style={{ color: 'white', marginBottom: '10px' }}>Soul Dungeon</h2>
+                <h2 style={{ color: 'white', marginBottom: '10px' }}>靈魂地城</h2>
                 <div style={{ color: '#f1c40f', fontSize: '1.2em', marginBottom: '20px', fontWeight: 'bold' }}>
-                    Gold: {gold}
+                    金幣: {gold}
                 </div>
 
-                <h3 style={{ color: 'white', marginBottom: '10px' }}>Tools</h3>
+                <h3 style={{ color: 'white', marginBottom: '10px' }}>建造工具</h3>
 
                 <button
                     onClick={() => selectTool('wall', null)}
@@ -64,7 +64,7 @@ function App() {
                         cursor: 'pointer'
                     }}
                 >
-                    Wall (10g)
+                    牆壁 (10g)
                 </button>
 
                 {Object.values(TRAP_DEFINITIONS).filter(t => t.cost > 0).map(trap => (
@@ -106,7 +106,7 @@ function App() {
                         marginTop: '10px'
                     }}
                 >
-                    Sell (Refund)
+                    拆除 (退費)
                 </button>
 
                 <div style={{ height: '20px' }}></div>
@@ -123,14 +123,14 @@ function App() {
                         fontWeight: 'bold'
                     }}
                 >
-                    Start Wave
+                    開始進攻
                 </button>
             </div>
 
             <div id="game-container" style={{ flex: 1, height: '100%', position: 'relative' }}></div>
 
             <div style={{ position: 'absolute', top: 10, right: 10, padding: '10px', color: 'white', pointerEvents: 'none' }}>
-                <p>Selected: {selectedTool}</p>
+                <p>當前選擇: {selectedTool === 'wall' ? '牆壁' : (selectedTool === 'sell' ? '拆除' : (currentTrapId ? '陷阱' : selectedTool))}</p>
             </div>
         </div>
     )

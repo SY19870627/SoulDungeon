@@ -270,3 +270,7 @@
 - **Change**: Updated initial gold from 500 to 120.
 - **Reason**: Rebalancing starting resources for tighter gameplay.
 
+### 38. Localization (Traditional Chinese)
+- **Change**: Translated Main UI (`App.tsx`) and Trap Names (`TrapRegistry.ts`) to Traditional Chinese.
+- **Reason**: Enhancing accessibility for localized audience.
+

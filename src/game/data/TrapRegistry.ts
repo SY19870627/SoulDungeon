@@ -3,7 +3,7 @@ import { TrapConfig } from '../systems/GridSystem';
 export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
     'spike': {
         id: 'spike',
-        name: 'Spike',
+        name: '尖刺坑',
         type: 'damage',
         color: 0xff0000,
         cost: 20,
@@ -18,7 +18,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
     },
     'bear_trap': {
         id: 'bear_trap',
-        name: 'Bear Trap',
+        name: '捕獸夾',
         type: 'damage', // Logic type
         color: 0x553311, // Brown
         cost: 25,
@@ -36,7 +36,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
     },
     'rune': {
         id: 'rune',
-        name: 'Magic Rune',
+        name: '魔法符文',
         type: 'elemental',
         color: 0x00ffff, // Cyan
         cost: 40,
@@ -48,7 +48,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
     },
     'spring': {
         id: 'spring',
-        name: 'Spring',
+        name: '彈簧板',
         type: 'physics',
         color: 0x00ff00,
         cost: 30,
@@ -60,7 +60,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
     },
     'oil': {
         id: 'oil',
-        name: 'Oil',
+        name: '油桶',
         type: 'elemental',
         color: 0x333333,
         cost: 10,
@@ -69,7 +69,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
     },
     'fire': {
         id: 'fire',
-        name: 'Fire',
+        name: '噴火口',
         type: 'damage',
         color: 0xff4500,
         cost: 15,
@@ -80,7 +80,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
     },
     'burning_oil': {
         id: 'burning_oil',
-        name: 'Burning Oil',
+        name: '烈焰地獄',
         type: 'damage',
         color: 0x8b0000, // Dark Red
         cost: 0,
