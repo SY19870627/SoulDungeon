@@ -1,5 +1,9 @@
 import Phaser from 'phaser';
-import { MainScene } from '../scenes/MainScene';
+// import { MainScene } from '../scenes/MainScene'; // Removed to avoid circular dep if MainScene not used elsewhere?
+// Actually MainScene might be used for type? "scene: Phaser.Scene" is used.
+import { HealthBar } from '../components/HealthBar';
+import { EmoteBubble } from '../components/EmoteBubble';
+import { DungeonRenderer } from '../systems/DungeonRenderer';
 
 export interface AdventurerConfig {
     id: string;
@@ -27,14 +31,13 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
     // Visuals
     private bodySprite: Phaser.GameObjects.Sprite;
-    private healthBarBg: Phaser.GameObjects.Rectangle;
-    private healthBarFg: Phaser.GameObjects.Rectangle;
-    private emoteText: Phaser.GameObjects.Text;
+    private healthBar: HealthBar;
+    private emoteBubble: EmoteBubble;
 
     constructor(scene: Phaser.Scene, x: number, y: number, config: AdventurerConfig) {
         super(scene, x, y);
         this.scene.add.existing(this);
-        this.setDepth(MainScene.DEPTH_ADVENTURER);
+        this.setDepth(DungeonRenderer.DEPTH_ADVENTURER);
 
         this.id = config.id;
         this.hp = config.hp;
@@ -42,71 +45,23 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.speed = config.speed;
         this.path = config.path;
 
+
         // Create Body (Sprite)
         this.bodySprite = scene.add.sprite(0, 0, 'hero');
         this.bodySprite.setDisplaySize(32, 32); // Adjust size relative to tile (64)
         this.add(this.bodySprite);
 
         // Create Health Bar
-        const barWidth = 40;
-        const barHeight = 6;
-        const barY = -25;
+        this.healthBar = new HealthBar(scene, 0, -25);
+        this.add(this.healthBar);
 
-        this.healthBarBg = scene.add.rectangle(0, barY, barWidth, barHeight, 0xff0000);
-        this.healthBarFg = scene.add.rectangle(0, barY, barWidth, barHeight, 0x00ff00);
-
-        // Align health bar to start from left
-        this.healthBarFg.setOrigin(0, 0.5);
-        this.healthBarBg.setOrigin(0, 0.5);
-        // Center the whole bar group
-        this.healthBarBg.x = -barWidth / 2;
-        this.healthBarFg.x = -barWidth / 2;
-
-        this.add(this.healthBarBg);
-        this.add(this.healthBarFg);
-
-        // Create Emote Text
-        this.emoteText = scene.add.text(0, -45, '', { fontSize: '24px' });
-        this.emoteText.setOrigin(0.5);
-        this.emoteText.setVisible(false);
-        this.add(this.emoteText);
+        // Create Emote Bubble
+        this.emoteBubble = new EmoteBubble(scene, 0, -45);
+        this.add(this.emoteBubble);
     }
 
     public showEmote(emoji: string, duration: number = 1000) {
-        if (!this.scene) return;
-
-        // Stop any existing animations on the emote text
-        this.scene.tweens.killTweensOf(this.emoteText);
-
-        this.emoteText.setText(emoji);
-        this.emoteText.setVisible(true);
-        this.emoteText.setScale(0);
-        this.emoteText.setAlpha(1);
-        this.emoteText.y = -45; // Reset position in case it was floating up
-
-        // Pop in
-        this.scene.tweens.add({
-            targets: this.emoteText,
-            scale: 1.2,
-            duration: 200,
-            ease: 'Back.out',
-            onComplete: () => {
-                if (!this.scene) return;
-                // Fade out after delay
-                this.scene.tweens.add({
-                    targets: this.emoteText,
-                    alpha: 0,
-                    y: this.emoteText.y - 20, // Float up
-                    duration: 500,
-                    delay: duration - 700,
-                    onComplete: () => {
-                        if (!this.scene) return;
-                        this.emoteText.setVisible(false);
-                        this.emoteText.y = -45; // Reset position
-                    }
-                });
-            }
-        });
+        this.emoteBubble.show(emoji, duration);
     }
 
     public takeDamage(amount: number) {
@@ -116,7 +71,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
     private updateHealthBar() {
         const percent = Math.max(0, this.hp / this.maxHp);
-        this.healthBarFg.scaleX = percent;
+        this.healthBar.updateHealth(percent);
     }
 
     public applyStatus(type: string, duration: number) {

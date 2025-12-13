@@ -50,53 +50,66 @@ export class TrapSystem {
         };
 
         this.legacyEffects['physics'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
-            const direction = trap.direction || 'up';
-            const pushDistance = trap.config.pushDistance || 0;
-            let dx = 0;
-            let dy = 0;
-
-            if (direction === 'up') dy = -pushDistance;
-            else if (direction === 'down') dy = pushDistance;
-            else if (direction === 'left') dx = -pushDistance;
-            else if (direction === 'right') dx = pushDistance;
-
-            const currentGrid = gridSystem.worldToGrid(adv.x, adv.y);
-            if (!currentGrid) return;
-
-            const targetX = currentGrid.x + dx;
-            const targetY = currentGrid.y + dy;
-
-            if (gridSystem.isWalkable(targetX, targetY)) {
-                console.log(`${trap.config.name}! Jumping to ${targetX}, ${targetY}`);
-                if (trap.config.emoteSuccess) {
-                    adv.showEmote(trap.config.emoteSuccess);
-                }
-
-                const targetWorld = gridSystem.gridToWorld(targetX, targetY);
-
-                adv.jumpTo(targetWorld.x, targetWorld.y, 500, () => {
-                    const newPath = pathfinding.findPath({ x: targetX, y: targetY }, endPos);
-
-                    if (newPath.length > 0) {
-                        adv.teleport(targetWorld.x, targetWorld.y, newPath);
-                    } else {
-                        adv.teleport(targetWorld.x, targetWorld.y, []);
-                    }
-
-                    const landingCell = gridSystem.getCell(targetX, targetY);
-                    if (landingCell && landingCell.trap) {
-                        trapSystem.trigger(adv, landingCell.trap, dt, gridSystem, pathfinding, endPos, depth + 1);
-                    }
-                });
-
-            } else {
-                console.log('Spring blocked!');
-                if (trap.config.emoteFail) {
-                    adv.showEmote(trap.config.emoteFail);
-                }
-                adv.takeDamage(20);
-            }
+            this.handlePhysicsTrap(adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth);
         };
+    }
+
+    private handlePhysicsTrap(
+        adv: Adventurer,
+        trap: Trap,
+        dt: number,
+        gridSystem: GridSystem,
+        pathfinding: Pathfinding,
+        endPos: { x: number, y: number },
+        trapSystem: TrapSystem,
+        depth: number
+    ) {
+        const direction = trap.direction || 'up';
+        const pushDistance = trap.config.pushDistance || 0;
+        let dx = 0;
+        let dy = 0;
+
+        if (direction === 'up') dy = -pushDistance;
+        else if (direction === 'down') dy = pushDistance;
+        else if (direction === 'left') dx = -pushDistance;
+        else if (direction === 'right') dx = pushDistance;
+
+        const currentGrid = gridSystem.worldToGrid(adv.x, adv.y);
+        if (!currentGrid) return;
+
+        const targetX = currentGrid.x + dx;
+        const targetY = currentGrid.y + dy;
+
+        if (gridSystem.isWalkable(targetX, targetY)) {
+            console.log(`${trap.config.name}! Jumping to ${targetX}, ${targetY}`);
+            if (trap.config.emoteSuccess) {
+                adv.showEmote(trap.config.emoteSuccess);
+            }
+
+            const targetWorld = gridSystem.gridToWorld(targetX, targetY);
+
+            adv.jumpTo(targetWorld.x, targetWorld.y, 500, () => {
+                const newPath = pathfinding.findPath({ x: targetX, y: targetY }, endPos);
+
+                if (newPath.length > 0) {
+                    adv.teleport(targetWorld.x, targetWorld.y, newPath);
+                } else {
+                    adv.teleport(targetWorld.x, targetWorld.y, []);
+                }
+
+                const landingCell = gridSystem.getCell(targetX, targetY);
+                if (landingCell && landingCell.trap) {
+                    trapSystem.trigger(adv, landingCell.trap, dt, gridSystem, pathfinding, endPos, depth + 1);
+                }
+            });
+
+        } else {
+            console.log('Spring blocked!');
+            if (trap.config.emoteFail) {
+                adv.showEmote(trap.config.emoteFail);
+            }
+            adv.takeDamage(20);
+        }
     }
 
     public update(dt: number, gridSystem: GridSystem, adventurers: Adventurer[], pathfinding: Pathfinding, endPos: { x: number, y: number }) {

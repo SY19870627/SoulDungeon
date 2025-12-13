@@ -140,4 +140,13 @@
 ### 13. Visual Architecture Pivot (Juice Update)
 -   **Content**: Abandoned Sprite Sheet animations in favor of Tween-based procedural animation for better visual feedback (Juice) and easier asset management. Refactored Adventurer and MainScene.
 
+### 14. Refactoring & Componentization
+-   **Goal**: Improve Separation of Concerns (SoC) and maintainability.
+-   **Changes**:
+    -   **Components**: Extracted `HealthBar` and `EmoteBubble` into reusable components; cleaned up `Adventurer` class.
+    -   **Rendering**: Created `DungeonRenderer` system to handle grid, walls, and trap rendering, decoupling it from `MainScene`.
+    -   **Logic**: Extracted internal physics logic from `TrapSystem` into specific handler methods.
+    -   **Cleanup**: Deleted redundant `Hero.ts`.
+
+
 
