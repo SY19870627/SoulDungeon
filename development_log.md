@@ -157,6 +157,17 @@
 - **New Feature**: Updated `Pathfinding` system to support `dynamic obstacles`.
 - **Behavior Change**: Adventurers now permanently avoid tiles where they have previously taken damage, effectively treating known traps as walls.
 
+### 17. [Dev Log] - Semantic Memory System
+- **Refactoring**: Refactored Adventurer Memory from binary blocked-check to Semantic Map (Type/Detail).
+- **Architecture**: Supports future features where different classes react differently to specific trap types.
+- **Implementation**:
+  - Adventurer now stores `MemoryCell { type, detail, timestamp }`.
+  - Pathfinding accepts `memoryContext` to make informed routing decisions.
+  - TrapSystem teaches Adventurer about trap identity upon trigger.
+
+### 18. [Dev Log] - Debugging & Transparency
+- **Logging**: Added console logs to `Pathfinding` (inspection) and `TrapSystem` (interaction) to clearly indicate when Adventurers encounter Walls or Traps.
+
 
 
 

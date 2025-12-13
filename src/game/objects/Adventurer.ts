@@ -26,7 +26,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public isMoving: boolean = false;
     private justArrived: boolean = false;
     private stepCount: number = 0;
-    private trapMemory: Set<string> = new Set();
+    private memory: Map<string, { type: string, detail: string, timestamp: number }> = new Map();
     private target: { x: number, y: number };
 
     // Pause Logic
@@ -70,6 +70,18 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.emoteBubble.show(emoji, duration);
     }
 
+    public remember(x: number, y: number, type: string, detail: string) {
+        const key = `${x},${y}`;
+        if (!this.memory.has(key)) {
+            this.memory.set(key, { type, detail, timestamp: Date.now() });
+            console.log(`Adventurer ${this.id} remembered ${detail} (${type}) at ${key}`);
+        }
+    }
+
+    public getMemoryAt(x: number, y: number) {
+        return this.memory.get(`${x},${y}`);
+    }
+
     public takeDamage(
         amount: number,
         source?: { x: number, y: number },
@@ -79,12 +91,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.updateHealthBar();
 
         if (source && context) {
-            const key = `${source.x},${source.y}`;
-            if (!this.trapMemory.has(key)) {
-                this.trapMemory.add(key);
-                console.log(`Adventurer ${this.id} learned trap at ${key}`);
-                this.recalculatePath(context.gridSystem, context.pathfinding);
-            }
+            this.recalculatePath(context.gridSystem, context.pathfinding);
         }
     }
 
@@ -96,13 +103,13 @@ export class Adventurer extends Phaser.GameObjects.Container {
         if (!currentGrid) return; // Off grid?
 
         // Recalculate
-        const blacklist = Array.from(this.trapMemory);
-        console.log(`[Adventurer ${this.id}] Recalculating path. Target: ${this.target.x},${this.target.y}. Memory: ${blacklist.join('|')}`);
+        // Recalculate
+        console.log(`[Adventurer ${this.id}] Recalculating path using Semantic Memory. Size: ${this.memory.size}`);
 
         const newPath = pathfinding.findPath(
             currentGrid,
             this.target,
-            blacklist
+            this.memory
         );
 
         if (newPath.length > 0) {

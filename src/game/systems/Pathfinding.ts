@@ -21,8 +21,14 @@ export class Pathfinding {
         this.gridSystem = gridSystem;
     }
 
-    public findPath(start: Point, end: Point, excludeList: string[] = []): Point[] {
-        console.log(`[Pathfinding] findPath from ${start.x},${start.y} to ${end.x},${end.y}. Exclude: ${excludeList.join('|')}`);
+    public findPath(
+        start: Point,
+        end: Point,
+        memoryContext?: Map<string, { type: string, detail: string }> | string[]
+    ): Point[] {
+        const memorySize = memoryContext instanceof Map ? memoryContext.size : (Array.isArray(memoryContext) ? memoryContext.length : 0);
+        console.log(`[Pathfinding] findPath from ${start.x},${start.y} to ${end.x},${end.y}. MemoryKeys: ${memorySize}`);
+
         if (!this.gridSystem.isWalkable(start.x, start.y) || !this.gridSystem.isWalkable(end.x, end.y)) {
             console.log(`[Pathfinding] Start or End unwalkable`);
             return [];
@@ -71,9 +77,31 @@ export class Pathfinding {
                     continue;
                 }
 
-                if (excludeList.includes(neighborKey)) {
-                    console.log(`[Pathfinding] Skipping excluded neighbor: ${neighborKey}`);
-                    continue;
+                // Semantic Memory Check
+                const cell = this.gridSystem.getCell(neighborPos.x, neighborPos.y);
+                if (cell) {
+                    if (cell.isWall) {
+                        console.log(`[Pathfinding] Encountered Wall at ${neighborPos.x},${neighborPos.y}`);
+                    } else if (cell.trap) {
+                        console.log(`[Pathfinding] Encountered Trap at ${neighborPos.x},${neighborPos.y} (Type: ${cell.trap.config.type})`);
+                    }
+                }
+
+                if (memoryContext) {
+                    if (memoryContext instanceof Map) {
+                        if (memoryContext.has(neighborKey)) {
+                            const memory = memoryContext.get(neighborKey);
+                            if (memory && memory.type === 'trap') {
+                                console.log(`[Pathfinding] Avoiding known trap at ${neighborKey} (${memory.detail})`);
+                                continue;
+                            }
+                        }
+                    } else if (Array.isArray(memoryContext)) {
+                        if (memoryContext.includes(neighborKey)) {
+                            console.log(`[Pathfinding] Avoiding excluded neighbor: ${neighborKey}`);
+                            continue;
+                        }
+                    }
                 }
 
                 if (!this.gridSystem.isWalkable(neighborPos.x, neighborPos.y)) {

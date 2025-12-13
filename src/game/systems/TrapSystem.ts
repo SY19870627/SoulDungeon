@@ -145,6 +145,13 @@ export class TrapSystem {
 
         if (trap.cooldownTimer > 0) return;
 
+        console.log(`[TrapSystem] Encountered Trap at ${trap.x},${trap.y} (Type: ${trap.config.type})`);
+
+        // Semantic Memory: Learn the trap
+        if (adv && typeof adv.remember === 'function') {
+            adv.remember(trap.x, trap.y, 'trap', trap.config.type);
+        }
+
         if (trap.config.components) {
             this.processTriggers(trap, [adv], gridSystem, 'enter', dt, pathfinding, endPos);
         } else {
