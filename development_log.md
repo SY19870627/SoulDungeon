@@ -216,3 +216,7 @@
 - **Collision**: If a wall is in the way, the adventurer flies towards it, crashes ('Bonk'), takes 15 damage, and rebounds to the start position.
 - **Visuals**: Implemented `bonkAgainstWall` tween sequence with '😵' emote and camera shake.
 - **Strategy**: Encourages players to use walls specifically as "Anvils" for their traps.
+
+### 26. UI Cleanup
+- **Changes**: Removed the yellow/cyan pathfinding preview line and the fixed red endpoint marker.
+- **Reasoning**: The game has shifted from "Fixed Path TD" to "Dynamic Roaming Survival". Visualizing a single static path is misleading when adventurers are actively roaming, rerouting, and exploring.

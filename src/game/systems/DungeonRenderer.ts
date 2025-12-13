@@ -33,7 +33,7 @@ export class DungeonRenderer {
         this.trapGroup.setDepth(DungeonRenderer.DEPTH_TRAP);
     }
 
-    public drawGrid(startPos: { x: number, y: number }, endPos: { x: number, y: number }) {
+    public drawGrid(startPos: { x: number, y: number }) {
         this.gridGraphics.clear();
         this.gridGraphics.lineStyle(2, 0xffffff, 0.5);
 
@@ -48,14 +48,10 @@ export class DungeonRenderer {
             }
         }
 
-        // Draw Start and End markers
+        // Draw Start marker
         const startOrigin = this.gridSystem.getGridOrigin(startPos.x, startPos.y);
         this.gridGraphics.fillStyle(0x00ff00, 0.5);
         this.gridGraphics.fillRect(startOrigin.x, startOrigin.y, tileSize, tileSize);
-
-        const endOrigin = this.gridSystem.getGridOrigin(endPos.x, endPos.y);
-        this.gridGraphics.fillStyle(0xff0000, 0.5);
-        this.gridGraphics.fillRect(endOrigin.x, endOrigin.y, tileSize, tileSize);
     }
 
     public drawWalls() {

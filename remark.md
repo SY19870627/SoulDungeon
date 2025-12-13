@@ -207,7 +207,9 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 *   **操作**：
     *   左鍵放置/旋轉。
     *   右鍵移除。
-    *   即時預覽連鎖結果（放置前顯示連結線）。
+    *   左鍵放置/旋轉。
+    *   右鍵移除。
+    *   (Removed) Path Preview & Fixed Endpoint: To emphasize dynamic roaming/stalking nature of adventurers.
 
 ## 6. 開發階段規劃 (Roadmap)
 

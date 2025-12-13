@@ -17,10 +17,8 @@ export class MainScene extends Phaser.Scene {
     private dungeonRenderer!: DungeonRenderer;
 
     private highlightGraphics: Phaser.GameObjects.Graphics | null = null;
-    private pathGraphics: Phaser.GameObjects.Graphics | null = null;
 
     private startPos = { x: 0, y: 0 };
-    private endPos = { x: 9, y: 9 };
 
     private currentTool: Tool | null = null;
     private wallTool!: WallTool;
@@ -56,10 +54,6 @@ export class MainScene extends Phaser.Scene {
     }
 
     create() {
-        // Animations
-        // Animations - DEPRECATED
-        // No longer using frame animations. Using Tweens.
-
         // Calculate offsets to center the grid
         const gridWidth = 10;
         const gridHeight = 10;
@@ -84,19 +78,15 @@ export class MainScene extends Phaser.Scene {
         this.highlightGraphics = this.add.graphics();
         this.highlightGraphics.setDepth(DungeonRenderer.DEPTH_HIGHLIGHT);
 
-        this.pathGraphics = this.add.graphics();
-        this.pathGraphics.setDepth(DungeonRenderer.DEPTH_HIGHLIGHT); // Path on top
-
         // Initialize Tools
         this.wallTool = new WallTool(this);
         this.trapTool = new TrapTool(this);
         this.sellTool = new SellTool(this);
         this.currentTool = this.wallTool; // Default
 
-        this.dungeonRenderer.drawGrid(this.startPos, this.endPos);
+        this.dungeonRenderer.drawGrid(this.startPos);
         this.setupInput();
         this.setupEvents();
-        this.updatePath(); // Initial path
 
         // Initial gold update
         this.time.delayedCall(100, () => {
@@ -120,7 +110,6 @@ export class MainScene extends Phaser.Scene {
 
     public refresh() {
         this.dungeonRenderer.refresh();
-        this.updatePath();
     }
 
     public rotateTrap(trap: Trap) {
@@ -198,27 +187,5 @@ export class MainScene extends Phaser.Scene {
                 this.currentTool.handlePointerDown(gridPos.x, gridPos.y);
             }
         });
-    }
-
-    private updatePath() {
-        if (!this.pathGraphics) return;
-        this.pathGraphics.clear();
-
-        const path = this.pathfinding.findPath(this.startPos, this.endPos);
-
-        if (path.length > 0) {
-            this.pathGraphics.lineStyle(4, 0xffff00, 1); // Yellow path
-            this.pathGraphics.beginPath();
-
-            const startWorld = this.gridSystem.gridToWorld(path[0].x, path[0].y);
-            this.pathGraphics.moveTo(startWorld.x, startWorld.y);
-
-            for (let i = 1; i < path.length; i++) {
-                const worldPos = this.gridSystem.gridToWorld(path[i].x, path[i].y);
-                this.pathGraphics.lineTo(worldPos.x, worldPos.y);
-            }
-
-            this.pathGraphics.strokePath();
-        }
     }
 }
