@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 export class EconomyManager extends Phaser.Events.EventEmitter {
     private gold: number;
 
-    constructor(initialGold: number = 100) {
+    constructor(initialGold: number = 500) {
         super();
         this.gold = initialGold;
     }

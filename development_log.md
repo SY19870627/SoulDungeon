@@ -151,6 +151,12 @@
 ### 15. Mechanics: Recursive Fire Propagation
 -   **Content**: Implemented instant ignition system using recursion (Flood Fill). Placing Fire next to a line of Oil now instantly ignites the entire path. Aligned Burning Oil price with standard Oil.
 
+### 16. [Dev Log] - AI Logic V2: Memory & Learning
+- **Refactoring**: Rolled back complex personality logic to focus on deterministic pathfinding.
+- **New Feature**: Added `trapMemory` to Adventurers.
+- **New Feature**: Updated `Pathfinding` system to support `dynamic obstacles`.
+- **Behavior Change**: Adventurers now permanently avoid tiles where they have previously taken damage, effectively treating known traps as walls.
+
 
 
 

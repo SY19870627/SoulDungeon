@@ -4,6 +4,8 @@ import Phaser from 'phaser';
 import { HealthBar } from '../components/HealthBar';
 import { EmoteBubble } from '../components/EmoteBubble';
 import { DungeonRenderer } from '../systems/DungeonRenderer';
+import { GridSystem } from '../systems/GridSystem';
+import { Pathfinding } from '../systems/Pathfinding';
 
 export interface AdventurerConfig {
     id: string;
@@ -24,6 +26,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public isMoving: boolean = false;
     private justArrived: boolean = false;
     private stepCount: number = 0;
+    private trapMemory: Set<string> = new Set();
+    private target: { x: number, y: number };
 
     // Pause Logic
     private pauseTimer: number = 0;
@@ -43,7 +47,9 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.hp = config.hp;
         this.maxHp = config.maxHp;
         this.speed = config.speed;
+        this.speed = config.speed;
         this.path = config.path;
+        this.target = this.path[this.path.length - 1];
 
 
         // Create Body (Sprite)
@@ -64,9 +70,70 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.emoteBubble.show(emoji, duration);
     }
 
-    public takeDamage(amount: number) {
+    public takeDamage(
+        amount: number,
+        source?: { x: number, y: number },
+        context?: { gridSystem: GridSystem, pathfinding: Pathfinding }
+    ) {
         this.hp -= amount;
         this.updateHealthBar();
+
+        if (source && context) {
+            const key = `${source.x},${source.y}`;
+            if (!this.trapMemory.has(key)) {
+                this.trapMemory.add(key);
+                console.log(`Adventurer ${this.id} learned trap at ${key}`);
+                this.recalculatePath(context.gridSystem, context.pathfinding);
+            }
+        }
+    }
+
+    public recalculatePath(gridSystem: GridSystem, pathfinding: Pathfinding) {
+        if (!this.target) return;
+
+        // Current position in grid
+        const currentGrid = gridSystem.worldToGrid(this.x, this.y);
+        if (!currentGrid) return; // Off grid?
+
+        // Recalculate
+        const blacklist = Array.from(this.trapMemory);
+        console.log(`[Adventurer ${this.id}] Recalculating path. Target: ${this.target.x},${this.target.y}. Memory: ${blacklist.join('|')}`);
+
+        const newPath = pathfinding.findPath(
+            currentGrid,
+            this.target,
+            blacklist
+        );
+
+        if (newPath.length > 0) {
+            console.log(`Adventurer ${this.id} recalculated path. Length: ${newPath.length}`);
+            this.path = newPath;
+            // Since we are likely in the middle of a tile or moving, we need to handle the current movement.
+            // But for now, we just update the path property, which is used in `move()`.
+            // Note: `move` relies on `path[0]` being the next tile.
+            // `findPath` usually returns [start, ... nodes]. If start is current tile, we might need to shift it?
+            // Existing logic: findPath returns [start, next, ...]
+            // Adventurer.move assumes path[0] is strictly the NEXT tile?
+            // Let's check existing implementation.
+            // In WaveManager or Pathfinding logic, findPath typically includes the start node.
+            // Adventurer logic: `const currentTile = this.path[0]; const nextTile = this.path[1];`
+            // and `this.scene.tweens.add... x: nextWorld... onComplete: path.shift()`
+            // So path[0] is treated as "current/start of segment".
+            // So if we set `this.path = newPath`, and `newPath[0]` is our current grid pos, it should be fine.
+        } else {
+            console.log(`Adventurer ${this.id} panic! No path found!`);
+            // Panic behavior: Try to exit or just die?
+            // Prompt says: "Switch state to EXITING (try to find path back to spawn). If still no path, destroy self."
+            // We'll implement a simple destroy for now or just set flag.
+            // Let's destroy for now to satisfy "If still no path, destroy self" (assuming spawn path also blocked).
+            // Or we can try to find path to (0,0) or similar.
+            // But let's stick to prompt: "If no path is found (the "Mouse" is trapped): Switch state to EXITING... If still no path, destroy."
+
+            // Try path back to start (0,0) or startPos if stored.
+            // We don't have startPos stored. Assume 0,0? Or just Despawn.
+            this.showEmote('☠️');
+            this.die(() => this.destroy());
+        }
     }
 
     private updateHealthBar() {

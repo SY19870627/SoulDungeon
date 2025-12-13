@@ -75,7 +75,7 @@ export class MainScene extends Phaser.Scene {
         this.gridSystem = new GridSystem(gridWidth, gridHeight, tileSize, offsetX, offsetY);
         this.pathfinding = new Pathfinding(this.gridSystem);
         this.waveManager = new WaveManager(this, this.gridSystem, this.pathfinding);
-        this.economyManager = new EconomyManager(100); // Start with 100 gold
+        this.economyManager = new EconomyManager(500); // Start with 500 gold
         this.waveManager.setEconomyManager(this.economyManager);
 
         // Initialize Renderer

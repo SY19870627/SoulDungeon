@@ -40,10 +40,10 @@ export class TrapSystem {
     }
 
     private registerLegacyEffects() {
-        this.legacyEffects['damage'] = (adv, trap, dt) => {
+        this.legacyEffects['damage'] = (adv, trap, dt, gridSystem, pathfinding) => {
             const damage = trap.config.damage || 0;
             console.log(`${trap.config.name} trap dealing ${damage} damage to ${adv.id}`);
-            adv.takeDamage(damage);
+            adv.takeDamage(damage, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
             if (trap.config.emoteSuccess) {
                 adv.showEmote(trap.config.emoteSuccess);
             }
@@ -89,13 +89,11 @@ export class TrapSystem {
             const targetWorld = gridSystem.gridToWorld(targetX, targetY);
 
             adv.jumpTo(targetWorld.x, targetWorld.y, 500, () => {
-                const newPath = pathfinding.findPath({ x: targetX, y: targetY }, endPos);
+                // Teleport logic first to set position
+                adv.teleport(targetWorld.x, targetWorld.y, []);
 
-                if (newPath.length > 0) {
-                    adv.teleport(targetWorld.x, targetWorld.y, newPath);
-                } else {
-                    adv.teleport(targetWorld.x, targetWorld.y, []);
-                }
+                // Then recalculate path (using memory)
+                adv.recalculatePath(gridSystem, pathfinding);
 
                 const landingCell = gridSystem.getCell(targetX, targetY);
                 if (landingCell && landingCell.trap) {
@@ -108,7 +106,7 @@ export class TrapSystem {
             if (trap.config.emoteFail) {
                 adv.showEmote(trap.config.emoteFail);
             }
-            adv.takeDamage(20);
+            adv.takeDamage(20, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
         }
     }
 

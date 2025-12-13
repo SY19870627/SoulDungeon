@@ -217,5 +217,15 @@ Rules for the new "Tabletop/Board Game" aesthetic:
     *   用途：負責核心遊戲畫面（網格地圖、角色移動、物理碰撞、粒子特效）。
     *   特性：高效能 WebGL 渲染，專為 2D 遊戲設計，支援 Tween-based animation 與豐富的動態效果。
 
-*   **架構設計 (Architecture): Hybrid**
     *   React 負責 UI 層，Phaser 負責 Game Loop 層，兩者透過 Event System 進行通訊。
+
+## Adventurer AI System v2: The "Smart Mouse" Logic
+- **Core Concept**: Adventurers now behave like mice in a maze that learn from pain.
+- **Memory Structure**: Each Adventurer instance maintains a private `memoryBlacklist` (a list of coordinates).
+- **Learning Trigger**:
+  - When an Adventurer interacts with a Trap and takes damage -> The current coordinate is added to `memoryBlacklist`.
+  - The Adventurer immediately recalculates their path.
+- **Pathfinding Logic**:
+  - The Pathfinding system must now accept a `dynamicObstacles` argument.
+  - A tile is considered "blocked" if it is EITHER a physical wall OR inside the Adventurer's `memoryBlacklist`.
+- **Result**: Adventurers will walk into a trap once, take damage, remember it, and treat it as a solid wall for the rest of their lifecycle.

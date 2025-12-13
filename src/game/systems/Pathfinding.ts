@@ -21,8 +21,10 @@ export class Pathfinding {
         this.gridSystem = gridSystem;
     }
 
-    public findPath(start: Point, end: Point): Point[] {
+    public findPath(start: Point, end: Point, excludeList: string[] = []): Point[] {
+        console.log(`[Pathfinding] findPath from ${start.x},${start.y} to ${end.x},${end.y}. Exclude: ${excludeList.join('|')}`);
         if (!this.gridSystem.isWalkable(start.x, start.y) || !this.gridSystem.isWalkable(end.x, end.y)) {
+            console.log(`[Pathfinding] Start or End unwalkable`);
             return [];
         }
 
@@ -64,7 +66,13 @@ export class Pathfinding {
             // Check neighbors
             const neighbors = this.getNeighbors(currentNode);
             for (const neighborPos of neighbors) {
-                if (closedSet.has(`${neighborPos.x},${neighborPos.y}`)) {
+                const neighborKey = `${neighborPos.x},${neighborPos.y}`;
+                if (closedSet.has(neighborKey)) {
+                    continue;
+                }
+
+                if (excludeList.includes(neighborKey)) {
+                    console.log(`[Pathfinding] Skipping excluded neighbor: ${neighborKey}`);
                     continue;
                 }
 

@@ -8,7 +8,7 @@ function App() {
     const gameRef = useRef<Phaser.Game | null>(null)
     const [selectedTool, setSelectedTool] = useState<string>('wall')
     const [currentTrapId, setCurrentTrapId] = useState<string | null>(null)
-    const [gold, setGold] = useState<number>(100)
+    const [gold, setGold] = useState<number>(500)
 
     useEffect(() => {
         if (gameRef.current === null) {

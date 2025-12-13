@@ -10,7 +10,7 @@ export class PhysicalDamageEffect implements ITrapEffect {
         const damage = effectConfig?.damage || trap.config.damage || 10;
 
         console.log(`[PhysicalDamage] Dealing ${damage} to ${adventurer.id}`);
-        adventurer.takeDamage(damage);
+        adventurer.takeDamage(damage, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
 
         // Visual feedback
         if (trap.config.emoteSuccess) {

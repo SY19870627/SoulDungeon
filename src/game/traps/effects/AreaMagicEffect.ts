@@ -34,7 +34,7 @@ export class AreaMagicEffect implements ITrapEffect {
         adventurers.forEach(target => {
             const dist = Phaser.Math.Distance.Between(trapWorld.x, trapWorld.y, target.x, target.y);
             if (dist <= worldRadius) {
-                target.takeDamage(damage);
+                target.takeDamage(damage, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
                 target.showEmote('🎇');
             }
         });
