@@ -19,6 +19,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public isJumping: boolean = false;
     public isMoving: boolean = false;
     private justArrived: boolean = false;
+    private stepCount: number = 0;
 
     // Pause Logic
     private pauseTimer: number = 0;
@@ -152,7 +153,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
             return { reachedEnd: true, enteredNewTile: false };
         }
 
-        // 5. Start Move (Hop)
+        // 5. Start Move (Juice)
         const currentTile = this.path[0];
         const nextTile = this.path[1];
 
@@ -166,6 +167,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         const nextWorld = gridSystem.gridToWorld(nextTile.x, nextTile.y);
 
         this.isMoving = true;
+        this.stepCount++;
 
         // Position Tween
         this.scene.tweens.add({
@@ -182,13 +184,26 @@ export class Adventurer extends Phaser.GameObjects.Container {
             }
         });
 
-        // Hop Tween (Visual)
+        // Juice: Squash & Stretch
+        // Scale scaleY to 0.8 and scaleX to 1.2 (squash) for 100ms, then yoyo back to 1.
         this.scene.tweens.add({
             targets: this.bodySprite,
-            y: -20, // Hop up
+            scaleX: 1.2,
+            scaleY: 0.8,
+            duration: 100,
+            yoyo: true,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Juice: Rotation Wobble
+        // Rotate between -5 and 5 degrees
+        const wobble = (this.stepCount % 2 === 0) ? 5 : -5;
+        this.scene.tweens.add({
+            targets: this.bodySprite,
+            angle: wobble,
             duration: 150,
             yoyo: true,
-            ease: 'Sine.easeOut'
+            ease: 'Sine.easeInOut'
         });
 
         return { reachedEnd: false, enteredNewTile: false };

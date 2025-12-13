@@ -137,3 +137,7 @@
     -   Removed `Animation Manager` setup in `MainScene`.
     -   Implemented `Squash & Stretch` scaling tweens in `Hero` movement logic.
 
+### 13. Visual Architecture Pivot (Juice Update)
+-   **Content**: Abandoned Sprite Sheet animations in favor of Tween-based procedural animation for better visual feedback (Juice) and easier asset management. Refactored Adventurer and MainScene.
+
+
