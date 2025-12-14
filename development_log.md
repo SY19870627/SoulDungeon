@@ -344,3 +344,12 @@
 - **System (Window)**:
   - **Config**: Set default window mode to `Fullscreen` in Electron `main.ts`.
 
+### 47. Mechanics: Oiled Status & Slipping
+- **Mechanics**: Implemented a status effect system where Adventurers accumulate 'grease' when stepping on Oil traps.
+- **Rules**: After taking **3 steps** while Oiled, the adventurer triggers a **Slip** event.
+- **Slip Outcome**:
+  - **Animation**: Chaotic wobble/spin and '💫' emote.
+  - **Stun**: Paused for 2.0 seconds.
+  - **Effect**: Status is removed after slipping.
+- **Goal**: Introduces a new CC (Crowd Control) layer, rewarding players for placing oil in long corridors.
+

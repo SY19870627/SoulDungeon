@@ -8,6 +8,7 @@ import { ProximityTrigger } from '../traps/triggers/ProximityTrigger';
 import { PhysicalDamageEffect } from '../traps/effects/PhysicalDamageEffect';
 import { RootEffect } from '../traps/effects/RootEffect';
 import { AreaMagicEffect } from '../traps/effects/AreaMagicEffect';
+import { ApplyStatusEffect } from '../traps/effects/ApplyStatusEffect';
 
 export type LegacyTrapEffect = (
     adventurer: Adventurer,
@@ -37,6 +38,7 @@ export class TrapSystem {
         this.effects['physical_damage'] = new PhysicalDamageEffect();
         this.effects['root'] = new RootEffect();
         this.effects['area_magic'] = new AreaMagicEffect();
+        this.effects['apply_status'] = new ApplyStatusEffect();
     }
 
     private registerLegacyEffects() {

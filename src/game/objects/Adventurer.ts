@@ -58,6 +58,9 @@ export class Adventurer extends Phaser.GameObjects.Container {
     public isFleeing: boolean = false;
     private spawnPoint: { x: number, y: number };
 
+    // Status Effects
+    private statusEffects: Map<string, any> = new Map();
+
     // Visuals
     private bodySprite: Phaser.GameObjects.Sprite;
     private healthBar: HealthBar;
@@ -246,7 +249,47 @@ export class Adventurer extends Phaser.GameObjects.Container {
         if (type === 'root') {
             this.pauseTimer += duration;
             this.requestEmote('🛑', EmotePriority.HIGH);
+        } else if (type === 'oiled') {
+            if (!this.statusEffects.has('oiled')) {
+                this.statusEffects.set('oiled', { stepsTaken: 0, threshold: 3 });
+                // Visual or tint?
+                // this.bodySprite.setTint(0x333333); // Darker/Oily? Or maybe Purple? Let's use Brownish
+                this.bodySprite.setTint(0x554433);
+            } else {
+                // Already oiled: Trigger immediate slip
+                this.slip();
+            }
         }
+    }
+
+    private slip() {
+        console.log("Adventurer slipped on oil!");
+        this.statusEffects.delete('oiled'); // Remove status
+        this.bodySprite.clearTint();
+        this.pauseTimer = 2.0; // Stun for 2 seconds
+
+        this.requestEmote('💫', EmotePriority.HIGH);
+
+        // Slip Animation (Chaotic Wobble)
+        // Slip Animation: Fall Over
+        this.scene.tweens.add({
+            targets: this.bodySprite,
+            angle: 90, // Fall sideways
+            y: 10, // Drop slightly
+            duration: 200,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                // Recover after stun
+                this.scene.tweens.add({
+                    targets: this.bodySprite,
+                    angle: 0,
+                    y: 0,
+                    duration: 500,
+                    delay: 1300, // Wait while stunned
+                    ease: 'Power2.out'
+                });
+            }
+        });
     }
 
     public move(dt: number, gridSystem: any): { reachedEnd: boolean, enteredNewTile: boolean } {
@@ -443,6 +486,15 @@ export class Adventurer extends Phaser.GameObjects.Container {
 
                     this.consumeStamina();
                     this.visitedTiles.add(`${nextTile.x},${nextTile.y}`);
+
+                    // Check Oiled Status
+                    if (this.statusEffects.has('oiled')) {
+                        const status = this.statusEffects.get('oiled');
+                        status.stepsTaken++;
+                        if (status.stepsTaken >= status.threshold) {
+                            this.slip();
+                        }
+                    }
                 }
             });
 

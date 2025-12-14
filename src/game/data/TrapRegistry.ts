@@ -65,7 +65,11 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         cost: 10,
         element: 'oil',
         maxTriggers: -1,
-        cooldown: 0
+        cooldown: 0,
+        components: {
+            triggers: [{ type: 'onStep' }],
+            effects: [{ type: 'apply_status', config: { status: 'oiled', duration: 0 } }] // Duration 0 = infinite/manual remove
+        }
     },
     'fire': {
         id: 'fire',
