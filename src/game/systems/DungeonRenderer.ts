@@ -107,6 +107,7 @@ export class DungeonRenderer {
                         else if (id === 'bear_trap') textureKey = 'trap_bear';
                         else if (id === 'rune') textureKey = 'trap_rune';
                         else if (id === 'burning_oil') textureKey = 'burning_oil';
+                        else if (id === 'campfire') textureKey = 'trap_campfire'; // New Mapping
                         else if (['oil', 'fire', 'lightning', 'water', 'poison', 'fan'].includes(id)) {
                             textureKey = id;
                         } else {
@@ -276,6 +277,25 @@ export class DungeonRenderer {
                     });
                     break;
 
+                case 'campfire':
+                    // Pulse / Warm Glow Animation
+                    this.scene.tweens.add({
+                        targets: sprite,
+                        scaleX: baseX * 1.1,
+                        scaleY: baseY * 1.1,
+                        duration: 500,
+                        yoyo: true,
+                        repeat: 1,
+                        ease: 'Sine.easeInOut'
+                    });
+                    this.scene.tweens.add({
+                        targets: sprite,
+                        alpha: 0.8,
+                        duration: 300,
+                        yoyo: true,
+                        repeat: 3
+                    });
+                    break;
                 case 'spring':
                     // Boing: Press then Shoot
                     this.scene.tweens.chain({

@@ -249,6 +249,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
         if (type === 'root') {
             this.pauseTimer += duration;
             this.requestEmote('🛑', EmotePriority.HIGH);
+        } else if (type === 'stun') {
+            this.pauseTimer += duration;
         } else if (type === 'oiled') {
             if (!this.statusEffects.has('oiled')) {
                 this.statusEffects.set('oiled', { stepsTaken: 0, threshold: 3 });
@@ -538,6 +540,24 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private updateStaminaBar() {
         const percent = Math.max(0, this.stamina / this.maxStamina);
         this.staminaBar.updateStamina(percent);
+    }
+
+    public recoverStamina(amount: number) {
+        this.stamina = Math.min(this.stamina + amount, this.maxStamina);
+        this.updateStaminaBar();
+        // Popup text?
+        console.log(`Adventurer ${this.id} recovered ${amount} SP.`);
+    }
+
+    public hasStatus(key: string): boolean {
+        return this.statusEffects.has(key);
+    }
+
+    public removeStatus(key: string) {
+        this.statusEffects.delete(key);
+        if (key === 'oiled') {
+            this.bodySprite.clearTint();
+        }
     }
 
 

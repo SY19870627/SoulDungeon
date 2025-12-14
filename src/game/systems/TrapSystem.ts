@@ -9,6 +9,7 @@ import { PhysicalDamageEffect } from '../traps/effects/PhysicalDamageEffect';
 import { RootEffect } from '../traps/effects/RootEffect';
 import { AreaMagicEffect } from '../traps/effects/AreaMagicEffect';
 import { ApplyStatusEffect } from '../traps/effects/ApplyStatusEffect';
+import { CampfireEffect } from '../traps/effects/CampfireEffect';
 
 export type LegacyTrapEffect = (
     adventurer: Adventurer,
@@ -39,6 +40,7 @@ export class TrapSystem {
         this.effects['root'] = new RootEffect();
         this.effects['area_magic'] = new AreaMagicEffect();
         this.effects['apply_status'] = new ApplyStatusEffect();
+        this.effects['campfire_effect'] = new CampfireEffect();
     }
 
     private registerLegacyEffects() {

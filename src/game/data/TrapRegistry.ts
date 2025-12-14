@@ -83,17 +83,31 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         maxTriggers: -1,
         cooldown: 0
     },
-    'burning_oil': {
+    burning_oil: {
         id: 'burning_oil',
         name: '烈焰地獄',
         type: 'damage',
-        color: 0x8b0000, // Dark Red
+        color: 0x8b0000,
         cost: 0,
         damage: 50,
         element: 'fire',
         isScary: true,
         maxTriggers: -1,
         cooldown: 0
+    },
+    campfire: {
+        id: 'campfire',
+        name: '營火',
+        type: 'support', // Or 'utility'
+        color: 0xffcc00, // Warm Orange
+        cost: 15,
+        maxTriggers: 1,
+        isScary: false,
+        cooldown: 5,
+        components: {
+            triggers: [{ type: 'onStep' }],
+            effects: [{ type: 'campfire_effect' }]
+        }
     }
 };
 

@@ -351,5 +351,11 @@
   - **Animation**: Chaotic wobble/spin and '💫' emote.
   - **Stun**: Paused for 2.0 seconds.
   - **Effect**: Status is removed after slipping.
-- **Goal**: Introduces a new CC (Crowd Control) layer, rewarding players for placing oil in long corridors.
+### 48. Mechanics: Campfire & Interactions
+- **Mechanics**: Implemented **Campfire (營火)** trap.
+- **Functionality**:
+  - **Standard**: Investigating a campfire restores **5 SP** and applies a brief `stun` (Resting). Visual: `Thinking/Zzz` emote.
+  - **Synergy (Oiled)**: If the Adventurer is **Oiled**, the campfire **IGNORES** healing and instead **IGNITES** the oil.
+    - **Outcome**: Deal **30 Damage** immediately, remove Oiled status, and play `🔥` emote.
+- **Goal**: Provides both a support tool for baiting (restore stamina so they live longer) and a punishment tool for oiled adventurers.
 

@@ -1,7 +1,8 @@
 export type ToolType =
-    | 'spring' | 'spike'
+    | 'spring' | 'spike' | 'bear_trap'
     | 'meat' | 'treasure'
     | 'oil' | 'fire'
+    | 'campfire'
     | 'eraser';
 
 export interface ToolDefinition {
@@ -9,13 +10,17 @@ export interface ToolDefinition {
     name: string;
     icon: string;
     hint?: string;
-    category: 'physics' | 'lure' | 'element' | 'edit';
+    category: 'physics' | 'lure' | 'element' | 'edit' | 'support';
 }
 
 export const TOOLS: ToolDefinition[] = [
     // Physics
     { id: 'spring', name: '彈簧板', icon: '⏫', hint: '可旋轉', category: 'physics' },
     { id: 'spike', name: '尖刺坑', icon: '🗡️', hint: '30傷', category: 'physics' },
+    { id: 'bear_trap', name: '捕獸夾', icon: '🐾', hint: '定身', category: 'physics' },
+
+    // Support
+    { id: 'campfire', name: '營火', icon: '🔥', hint: '+體力/-油', category: 'support' },
 
     // Lure
     { id: 'meat', name: '烤肉', icon: '🍖', hint: '吸貪吃鬼', category: 'lure' },
@@ -31,6 +36,7 @@ export const TOOLS: ToolDefinition[] = [
 
 export const CATEGORIES = {
     physics: '物理陷阱',
+    support: '輔助設施',
     lure: '誘餌',
     element: '化學元素',
     edit: '編輯'

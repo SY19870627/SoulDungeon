@@ -45,6 +45,7 @@ export class MainScene extends Phaser.Scene {
         this.load.image('oil', 'assets/oil.png');
         this.load.image('fire', 'assets/fire.png');
         this.load.image('burning_oil', 'assets/burning_oil.png'); // New
+        this.load.image('trap_campfire', 'assets/Campfire.png'); // New Campfire Asset
 
         // Element Fallbacks/Renamed?
         this.load.image('lightning', 'assets/lightning.png');
