@@ -90,7 +90,7 @@ export class MainScene extends Phaser.Scene {
         this.pathfinding = new Pathfinding(this.gridSystem);
         this.waveManager = new WaveManager(this, this.gridSystem, this.pathfinding);
         this.waveManager.setSpawnPoint(this.startPos); // New
-        this.economyManager = new EconomyManager(120); // Start with 120 gold
+        this.economyManager = new EconomyManager(1000); // Start with 1000 gold
         this.waveManager.setEconomyManager(this.economyManager);
 
         // Initialize Renderer
@@ -159,8 +159,8 @@ export class MainScene extends Phaser.Scene {
         this.highlightGraphics.fillRect(origin.x, origin.y, tileSize, tileSize);
     }
 
-    public animateTrapTrigger(gridX: number, gridY: number) {
-        this.dungeonRenderer.animateTrapTrigger(gridX, gridY);
+    public animateTrapTrigger(gridX: number, gridY: number, trapId?: string) {
+        this.dungeonRenderer.animateTrapTrigger(gridX, gridY, trapId);
     }
 
     // ---------------------------
@@ -194,6 +194,13 @@ export class MainScene extends Phaser.Scene {
 
         window.addEventListener('grid-updated', () => {
             this.refresh();
+        });
+
+        window.addEventListener('trap-triggered', (e: any) => {
+            const detail = e.detail;
+            if (detail) {
+                this.animateTrapTrigger(detail.x, detail.y, detail.id);
+            }
         });
     }
 

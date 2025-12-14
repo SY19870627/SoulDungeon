@@ -8,7 +8,6 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         color: 0xff0000,
         cost: 20,
         damage: 30,
-        emoteSuccess: '😖',
         isScary: true,
         maxTriggers: -1,
         cooldown: 0,
@@ -24,7 +23,6 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         color: 0x553311, // Brown
         cost: 25,
         damage: 15,
-        emoteSuccess: '🗯️',
         isScary: true,
         maxTriggers: 1,
         cooldown: 5, // Single use? Or cooldown. Components handle logic.
@@ -55,8 +53,6 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         color: 0x00ff00,
         cost: 30,
         pushDistance: 2,
-        emoteSuccess: '😱',
-        emoteFail: '🤕',
         isScary: false,
         maxTriggers: 1,
         cooldown: 0
@@ -91,7 +87,6 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         cost: 0,
         damage: 50,
         element: 'fire',
-        emoteSuccess: '🔥',
         isScary: true,
         maxTriggers: -1,
         cooldown: 0

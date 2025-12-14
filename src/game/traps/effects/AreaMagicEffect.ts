@@ -1,6 +1,6 @@
 import { ITrapEffect } from '../TrapInterfaces';
 import { Trap, GridSystem } from '../../systems/GridSystem';
-import { Adventurer } from '../../objects/Adventurer';
+import { Adventurer, EmotePriority } from '../../objects/Adventurer';
 import { TrapSystem } from '../../systems/TrapSystem';
 import { Pathfinding } from '../../systems/Pathfinding';
 import Phaser from 'phaser';
@@ -35,7 +35,7 @@ export class AreaMagicEffect implements ITrapEffect {
             const dist = Phaser.Math.Distance.Between(trapWorld.x, trapWorld.y, target.x, target.y);
             if (dist <= worldRadius) {
                 target.takeDamage(damage, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
-                target.showEmote('🎇');
+                target.requestEmote('🎇', EmotePriority.HIGH);
             }
         });
     }

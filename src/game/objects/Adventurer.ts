@@ -14,6 +14,11 @@ export interface AdventurerConfig {
     speed: number;
 }
 
+export enum EmotePriority {
+    NORMAL = 0,
+    HIGH = 1
+}
+
 export class Adventurer extends Phaser.GameObjects.Container {
     public id: string;
     public hp: number;
@@ -46,6 +51,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private isPanic: boolean = false;
     private isPanicAnimating: boolean = false;
     private panicTimer: number = 0;
+    private currentPriority: EmotePriority = EmotePriority.NORMAL;
+    private emoteEndTime: number = 0;
 
     // Flee Logic
     public isFleeing: boolean = false;
@@ -99,7 +106,18 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.decideNextPath();
     }
 
-    public showEmote(emoji: string, duration: number = 1000) {
+    public requestEmote(emoji: string, priority: EmotePriority, duration: number = 1000) {
+        const now = Date.now();
+        const isPlaying = now < this.emoteEndTime;
+
+        // Arbitration: Ignore NORMAL if HIGH is playing
+        if (isPlaying && this.currentPriority === EmotePriority.HIGH && priority === EmotePriority.NORMAL) {
+            return;
+        }
+
+        // Apply
+        this.currentPriority = priority;
+        this.emoteEndTime = now + duration;
         this.emoteBubble.show(emoji, duration);
     }
 
@@ -121,6 +139,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         context?: { gridSystem: GridSystem, pathfinding: Pathfinding }
     ) {
         this.hp -= amount;
+        this.requestEmote('😖', EmotePriority.HIGH); // Visual Feedback
         this.updateHealthBar();
 
         if (source && context) {
@@ -193,7 +212,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
                     // Scary trap discovered!
                     this.stamina -= 5;
                     this.updateStaminaBar();
-                    this.showEmote('😨');
+                    this.requestEmote('😨', EmotePriority.NORMAL);
                     this.knownTraps.add(key);
                     console.log(`Adventurer ${this.id} spotted SCARY trap at ${key}! Panic!`);
                     this.enterPanic();
@@ -212,7 +231,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     private enterPanic() {
         if (!this.isPanic) {
             this.isPanic = true;
-            this.showEmote('😰');
+            this.requestEmote('😰', EmotePriority.NORMAL);
             console.log(`Adventurer ${this.id} entering PANIC mode.`);
         }
     }
@@ -226,7 +245,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         console.log(`Adventurer ${this.id} applied status: ${type} for ${duration}s`);
         if (type === 'root') {
             this.pauseTimer += duration;
-            this.showEmote('🛑');
+            this.requestEmote('🛑', EmotePriority.HIGH);
         }
     }
 
@@ -370,7 +389,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
                     ease: 'Sine.easeOut',
                     onComplete: () => {
                         // 2. Show Emote & Deduct Stamina
-                        this.showEmote('😨');
+                        this.requestEmote('😨', EmotePriority.NORMAL);
                         this.stamina -= 5;
                         this.updateStaminaBar();
 
@@ -474,7 +493,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         if (this.isDying) return;
         console.log(`Adventurer ${this.id} EXHAUSTED/EXPIRED (0 Gold).`);
         this.isDying = true;
-        this.showEmote('💀'); // Dead icon for real expiry
+        this.requestEmote('💀', EmotePriority.HIGH); // Dead icon for real expiry
 
         // Fade out
         this.scene.tweens.add({
@@ -494,7 +513,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.stamina = this.maxStamina / 2; // Restore 50%
         this.speed *= 1.5; // Panic run
 
-        this.showEmote('😱', 60000); // Scream
+        this.requestEmote('😱', EmotePriority.NORMAL, 60000); // Scream
         this.bodySprite.setTint(0x8888ff); // Pale blue
 
         console.log(`Adventurer ${this.id} is FLEEING! Target: Spawn Point.`);
@@ -609,8 +628,8 @@ export class Adventurer extends Phaser.GameObjects.Container {
             ease: 'Quad.easeIn',
             onComplete: () => {
                 // Impact
-                this.showEmote('😵');
                 this.takeDamage(15, undefined, undefined);
+                this.requestEmote('😵', EmotePriority.HIGH); // Override any generic damage emote
                 this.scene.cameras.main.shake(100, 0.01);
 
                 // Rebound

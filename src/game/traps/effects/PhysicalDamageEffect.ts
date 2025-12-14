@@ -12,11 +12,6 @@ export class PhysicalDamageEffect implements ITrapEffect {
         console.log(`[PhysicalDamage] Dealing ${damage} to ${adventurer.id}`);
         adventurer.takeDamage(damage, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
 
-        // Visual feedback
-        if (trap.config.emoteSuccess) {
-            adventurer.showEmote(trap.config.emoteSuccess);
-        } else {
-            adventurer.showEmote('😖');
-        }
+
     }
 }

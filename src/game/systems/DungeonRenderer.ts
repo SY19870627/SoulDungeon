@@ -158,7 +158,7 @@ export class DungeonRenderer {
         this.syncTrapSprites();
     }
 
-    public animateTrapTrigger(gridX: number, gridY: number): void {
+    public animateTrapTrigger(gridX: number, gridY: number, trapId?: string): void {
         const key = `${gridX},${gridY}`;
         const sprite = this.trapSprites.get(key);
         if (sprite) {
@@ -177,15 +177,97 @@ export class DungeonRenderer {
 
             // Force reset to base scale to ensure clean start
             sprite.setScale(baseX, baseY);
+            sprite.setAlpha(1);
 
-            this.scene.tweens.add({
-                targets: sprite,
-                scaleX: baseX * 1.5,
-                scaleY: baseY * 1.5,
-                duration: 100,
-                yoyo: true,
-                ease: 'Back.out'
-            });
+            switch (trapId) {
+                case 'spike':
+                    // Stab: OffsetY up + ScaleY stretch
+                    this.scene.tweens.add({
+                        targets: sprite,
+                        y: sprite.y - 10,
+                        scaleY: baseY * 1.4,
+                        scaleX: baseX * 0.8,
+                        duration: 80,
+                        yoyo: true,
+                        ease: 'Back.out',
+                        onComplete: () => { sprite.y += 0; } // yoyo handles pos? yoyo usually restores.
+                        // Actually yoyo restores values to start.
+                    });
+                    break;
+
+                case 'bear_trap':
+                    // Snap: ScaleX close + Shake
+                    this.scene.tweens.add({
+                        targets: sprite,
+                        scaleX: baseX * 0.5,
+                        duration: 50,
+                        yoyo: true,
+                        repeat: 1
+                    });
+                    this.scene.tweens.add({
+                        targets: sprite,
+                        x: { from: sprite.x - 3, to: sprite.x + 3 },
+                        duration: 30,
+                        yoyo: true,
+                        repeat: 5
+                    });
+                    break;
+
+                case 'spring':
+                    // Boing: Press then Shoot
+                    this.scene.tweens.chain({
+                        targets: sprite,
+                        tweens: [
+                            {
+                                scaleY: baseY * 0.5,
+                                scaleX: baseX * 1.4,
+                                duration: 100,
+                                ease: 'Quad.out'
+                            },
+                            {
+                                scaleY: baseY * 1.5,
+                                scaleX: baseX * 0.8,
+                                duration: 150,
+                                ease: 'Back.out'
+                            },
+                            {
+                                scaleY: baseY,
+                                scaleX: baseX,
+                                duration: 100,
+                                ease: 'Bounce.out'
+                            }
+                        ]
+                    });
+                    break;
+
+                case 'rune':
+                case 'fire':
+                case 'burning_oil':
+                    // Pulse: Alpha Flash + Rotate/Scale
+                    this.scene.tweens.add({
+                        targets: sprite,
+                        alpha: 0.5,
+                        scaleX: baseX * 1.2,
+                        scaleY: baseY * 1.2,
+                        angle: sprite.angle + 15,
+                        duration: 150,
+                        yoyo: true,
+                        repeat: 2
+                    });
+                    break;
+
+                default:
+                    // Default Bounce
+                    this.scene.tweens.add({
+                        targets: sprite,
+                        scaleX: baseX * 1.5,
+                        scaleY: baseY * 1.5,
+                        duration: 100,
+                        yoyo: true,
+                        ease: 'Back.out'
+                    });
+                    break;
+            }
         }
     }
 }

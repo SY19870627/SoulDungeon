@@ -303,3 +303,24 @@
     -   Removed transparency logic from `DungeonRenderer` as the sprite is simply destroyed.
     -   **Fix**: Added `grid-updated` event dispatch to `TrapSystem` removal logic to ensure the sprite is immediately cleared from the view.
 
+### 43. Refactor: 實作情緒仲裁系統與陷阱物理動畫
+- **Emote Arbitration (Adventurer)**:
+  -   Introduced `EmotePriority` (NORMAL, HIGH).
+  -   Implemented `requestEmote` to manage priority: HIGH interrupts NORMAL, while NORMAL is ignored if HIGH is playing.
+  -   Updated Internal AI (Panic, Flee) to NORMAL.
+  -   Updated Physical Reactions (Damage, Status) to HIGH.
+-   **Diegetic Trap Feedback (Visuals)**:
+    -   Removed Emoji Popups (`emoteSuccess`) from all traps.
+    -   Implemented Physics-based Tween animations in `DungeonRenderer`:
+        -   **Spike**: Fast Stab & Retract.
+        -   **Bear Trap**: Rapid Snap & Shake.
+        -   **Spring**: Squash & Stretch (Boing).
+        -   **Magic**: Pulse & Rotate.
+    -   Added 'trap-triggered' event bus to decouple Logic (TrapSystem) from Visuals (Renderer).
+-   **Bug Fix**:
+    -   Fixed `TypeError: adventurer.showEmote is not a function` in `PhysicalDamageEffect` and `AreaMagicEffect` by migrating them to `requestEmote` and `takeDamage`'s built-in feedback.
+
+### 44. Balance Update - Economy (Testing)
+-   **Change**: Increased initial gold from 120 to 1000.
+-   **Reason**: Requested for testing purposes (Sandbox Mode).
+

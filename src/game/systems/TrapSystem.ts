@@ -44,9 +44,6 @@ export class TrapSystem {
             const damage = trap.config.damage || 0;
             console.log(`${trap.config.name} trap dealing ${damage} damage to ${adv.id}`);
             adv.takeDamage(damage, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
-            if (trap.config.emoteSuccess) {
-                adv.showEmote(trap.config.emoteSuccess);
-            }
         };
 
         this.legacyEffects['physics'] = (adv, trap, dt, gridSystem, pathfinding, endPos, trapSystem, depth) => {
@@ -82,9 +79,6 @@ export class TrapSystem {
 
         if (gridSystem.isWalkable(targetX, targetY)) {
             console.log(`${trap.config.name}! Jumping to ${targetX}, ${targetY}`);
-            if (trap.config.emoteSuccess) {
-                adv.showEmote(trap.config.emoteSuccess);
-            }
 
             const targetWorld = gridSystem.gridToWorld(targetX, targetY);
 
@@ -103,9 +97,6 @@ export class TrapSystem {
 
         } else {
             console.log('Spring blocked!');
-            if (trap.config.emoteFail) {
-                adv.showEmote(trap.config.emoteFail);
-            }
             adv.takeDamage(20, { x: trap.x, y: trap.y }, { gridSystem, pathfinding });
         }
     }
@@ -168,6 +159,10 @@ export class TrapSystem {
         } else {
             const effect = this.legacyEffects[trap.config.type];
             if (effect) {
+                // Legacy Dispatch
+                window.dispatchEvent(new CustomEvent('trap-triggered', {
+                    detail: { x: trap.x, y: trap.y, id: trap.config.id }
+                }));
                 effect(adv, trap, dt, gridSystem, pathfinding, endPos, this, depth);
             }
         }
@@ -205,6 +200,11 @@ export class TrapSystem {
                 }
 
                 if (triggered && triggeringAdventurer) {
+                    // Component Dispatch
+                    window.dispatchEvent(new CustomEvent('trap-triggered', {
+                        detail: { x: trap.x, y: trap.y, id: trap.config.id }
+                    }));
+
                     this.fireEffects(trap, triggeringAdventurer, gridSystem, dt, adventurers, pathfinding);
 
                     if (trap.config.cooldown) {
