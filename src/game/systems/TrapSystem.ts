@@ -145,6 +145,17 @@ export class TrapSystem {
 
         if (trap.cooldownTimer > 0) return;
 
+        // Durability Check
+        if (trap.remainingTriggers === 0) return;
+
+        let shouldRemove = false;
+        if (trap.remainingTriggers > 0) {
+            trap.remainingTriggers--;
+            if (trap.remainingTriggers === 0) {
+                shouldRemove = true;
+            }
+        }
+
         console.log(`[TrapSystem] Encountered Trap at ${trap.x},${trap.y} (Type: ${trap.config.type})`);
 
         // Semantic Memory: Learn the trap
@@ -159,6 +170,12 @@ export class TrapSystem {
             if (effect) {
                 effect(adv, trap, dt, gridSystem, pathfinding, endPos, this, depth);
             }
+        }
+
+        if (shouldRemove) {
+            console.log("Trap exhausted and removed");
+            gridSystem.removeTrap(trap.x, trap.y);
+            window.dispatchEvent(new CustomEvent('grid-updated'));
         }
     }
 
@@ -232,6 +249,7 @@ export class TrapSystem {
                 config: burningOilConfig,
                 type: burningOilConfig.type,
                 cooldownTimer: 0,
+                remainingTriggers: -1,
                 x: x,
                 y: y
             });

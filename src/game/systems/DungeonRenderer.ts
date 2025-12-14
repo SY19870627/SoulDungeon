@@ -139,6 +139,7 @@ export class DungeonRenderer {
                         else if (dir === 'left') angle = 270;
                         sprite.setAngle(angle);
                     }
+
                 }
             }
         }

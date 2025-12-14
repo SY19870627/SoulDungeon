@@ -9,6 +9,7 @@ export interface TrapConfig {
     damage?: number;
     element?: string; // 'fire', 'water', 'oil', 'lightning'
     cooldown?: number;
+    maxTriggers?: number; // Added for Durability System
     pushDistance?: number;
     emoteSuccess?: string;
     emoteFail?: string;
@@ -27,6 +28,7 @@ export interface Trap {
     // Dynamic state
     direction?: 'up' | 'down' | 'left' | 'right';
     cooldownTimer: number; // For cooldown management
+    remainingTriggers: number; // Durability (User Request)
     x: number;
     y: number;
     // We can keep these for backward compatibility or convenience, 
@@ -114,6 +116,13 @@ export class GridSystem {
     public placeTrap(x: number, y: number, trap: Trap): boolean {
         const cell = this.getCell(x, y);
         if (cell && !cell.isWall && !cell.trap) {
+            // Initialize remainingTriggers based on config
+            if (trap.config.maxTriggers !== undefined) {
+                trap.remainingTriggers = trap.config.maxTriggers;
+            } else {
+                trap.remainingTriggers = -1; // Infinite default
+            }
+
             cell.trap = trap;
             return true;
         }

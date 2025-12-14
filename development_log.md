@@ -284,3 +284,22 @@
 - **Action**: Added `dev:web` script (`vite`) to `package.json`.
 - **Benfit**: Allows standard browser development (Chrome) for faster iteration, treating Electron as a secondary release target.
 
+### 41. Trap Durability System (Current)
+-   **Stateful Traps**: Refactored `Trap` interface to hold runtime state (`remainingTriggers`).
+-   **Durability Logic**:
+    -   Implemented `maxTriggers` in `TrapConfig`.
+    -   **Spike**: Infinite durability (-1).
+    -   **Spring**: Single-use (1). Disappears after triggering.
+-   **Lifecycle**: Traps automatically remove themselves from the grid (`GridSystem.removeTrap`) when durability reaches 0.
+
+### 42. Trap Durability & Visuals (Reverted to Removal)
+-   **Durability Logic**:
+    -   Traps now maintain `remainingTriggers`.
+    -   **Spring**: Configured to 1 use.
+    -   **Spike/Elements**: Configured to -1 (Infinite).
+-   **Exhaustion Behavior**:
+    -   **Update**: Changed behavior from "Inactive/Ghost" back to **Auto-Remove**.
+    -   When a trap's durability reaches 0, it is immediately removed from the grid.
+    -   Removed transparency logic from `DungeonRenderer` as the sprite is simply destroyed.
+    -   **Fix**: Added `grid-updated` event dispatch to `TrapSystem` removal logic to ensure the sprite is immediately cleared from the view.
+

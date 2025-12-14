@@ -30,6 +30,7 @@ export class TrapTool implements Tool {
                 direction: 'up',
                 type: this.trapConfig.type,
                 cooldownTimer: 0,
+                remainingTriggers: -1, // Will be set by placeTrap
                 x: gridX,
                 y: gridY
             };
