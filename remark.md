@@ -19,9 +19,10 @@
 - [ ] **Implement Procedural Animation**: Use Code-driven Tweens for movement and feedback.
 
 ### 1.5 系統架構優化：視覺回饋分層 (Visual Feedback Layering)
-- [x] **情緒仲裁層 (Emote Arbitration)**：
-    - 將冒險者表情分為 `Internal` (AI思考) 與 `External` (受傷/狀態) 兩種優先級。
-    - **規則**：外部高優先級 (External/High) 可打斷內部低優先級 (Internal/Normal)，反之則忽略。
+- [x] **情緒粒子系統 (Emote Particle System)**：
+    -   移除優先級仲裁機制 (Arbitration)，改為並發顯示。
+    -   所有情緒符號 (Emotes) 視為獨立粒子，生成後自動上飄並淡出 (Float & Fade)。
+    -   支援多個表情同時顯示，增強視覺豐富度與即時回饋。
 - [x] **擬真物理動態 (Diegetic Trap Feedback)**：
     - 移除陷阱觸發時的 Emoji 符號。
     - 改為依據陷阱類型（尖刺、捕獸夾、彈簧）播放專屬的物理 Tween 動畫（穿刺、咬合、彈射）。

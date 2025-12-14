@@ -370,3 +370,10 @@
 ### 43. Code Cleanup
 - **Legacy Removal**: Removed `emoteSuccess` and `emoteFail` from the `TrapConfig` and `TrapSystem`. Visual feedback for traps is now handled exclusively by dynamic effects (tweens/particles) rather than static emote bubbles.
 
+### 50. Visual Enhancement - Emote Particle System
+- **Refactoring**: Switched Emote system from Single-Instance (Priority Arbitration) to Multi-Instance (Particle System).
+- **Behavior**: Emotes now spawn as independent bubbles that float up and fade out ("Fire and Forget").
+- **Benefit**: Supports rapid-fire emotes (e.g., concurrent damage and status effects) without one overriding the other.
+- **Implementation**: Updated `EmoteBubble` to manage tween lifecycles for multiple text objects and updated `Adventurer` to remove arbitration blocking.
+
+

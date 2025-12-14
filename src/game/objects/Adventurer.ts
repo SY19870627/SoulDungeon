@@ -102,7 +102,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
         this.add(this.staminaBar);
 
         // Create Emote Bubble (Higher up)
-        this.emoteBubble = new EmoteBubble(scene, 0, -50);
+        this.emoteBubble = new EmoteBubble(scene, 0, -5);
         this.add(this.emoteBubble);
 
         // Initial Decision
@@ -110,17 +110,7 @@ export class Adventurer extends Phaser.GameObjects.Container {
     }
 
     public requestEmote(emoji: string, priority: EmotePriority, duration: number = 1000) {
-        const now = Date.now();
-        const isPlaying = now < this.emoteEndTime;
-
-        // Arbitration: Ignore NORMAL if HIGH is playing
-        if (isPlaying && this.currentPriority === EmotePriority.HIGH && priority === EmotePriority.NORMAL) {
-            return;
-        }
-
-        // Apply
-        this.currentPriority = priority;
-        this.emoteEndTime = now + duration;
+        // No arbitration needed anymore - simpler fire-and-forget
         this.emoteBubble.show(emoji, duration);
     }
 
