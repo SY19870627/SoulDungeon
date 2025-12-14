@@ -181,17 +181,36 @@ export class DungeonRenderer {
 
             switch (trapId) {
                 case 'spike':
-                    // Stab: OffsetY up + ScaleY stretch
-                    this.scene.tweens.add({
+                    // Spike Animation: Sink -> Stab -> Return
+                    const startY = sprite.y; // Keep track of original Y
+                    this.scene.tweens.chain({
                         targets: sprite,
-                        y: sprite.y - 10,
-                        scaleY: baseY * 1.4,
-                        scaleX: baseX * 0.8,
-                        duration: 80,
-                        yoyo: true,
-                        ease: 'Back.out',
-                        onComplete: () => { sprite.y += 0; } // yoyo handles pos? yoyo usually restores.
-                        // Actually yoyo restores values to start.
+                        tweens: [
+                            // 1. Anticipation (Sink & Squash)
+                            {
+                                y: startY + 15,
+                                scaleY: baseY * 0.8,
+                                scaleX: baseX * 1.2,
+                                duration: 80,
+                                ease: 'Quad.out'
+                            },
+                            // 2. Attack (Thrust Up & Stretch)
+                            {
+                                y: startY - 20,
+                                scaleY: baseY * 1.5,
+                                scaleX: baseX * 0.7,
+                                duration: 50,
+                                ease: 'Back.out'
+                            },
+                            // 3. Recover (Return to idle)
+                            {
+                                y: startY,
+                                scaleY: baseY,
+                                scaleX: baseX,
+                                duration: 150,
+                                ease: 'Quad.out'
+                            }
+                        ]
                     });
                     break;
 

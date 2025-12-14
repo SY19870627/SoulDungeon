@@ -324,3 +324,11 @@
 -   **Change**: Increased initial gold from 120 to 1000.
 -   **Reason**: Requested for testing purposes (Sandbox Mode).
 
+### 45. Visual Polish - Spike Trap Animation
+-   **Change**: Refined Spike Trap animation to be more physical.
+-   **Sequence**:
+    1.  **Anticipation**: Sinks down (`y+5`) and squashes (`scaleY*0.8`).
+    2.  **Stab**: Rapidly thrusts up (`y-20`) and stretches (`scaleY*1.5`).
+    3.  **Recover**: Returns to idle.
+-   **Goal**: Better impact and "stabbing" feel.
+
