@@ -359,3 +359,11 @@
     - **Outcome**: Deal **30 Damage** immediately, remove Oiled status, and play `🔥` emote.
 - **Goal**: Provides both a support tool for baiting (restore stamina so they live longer) and a punishment tool for oiled adventurers.
 
+### 49. Mechanics: Volatile Ignition
+- **Mechanics**: Implemented proximity ignition for **Oiled** adventurers.
+- **Rules**:
+  - If an Oiled adventurer attempts to step into a **Fire Source** (Fire Vent, Campfire, Burning Oil):
+  - **Effect**: Immediate fumes explosion (30 Damage) and movement interrupt.
+  - **Override**: This checks happens **BEFORE** Trap Panic. Meaning an Oiled adventurer won't be scared of a fire trap; they will just explode from the fumes before getting close enough to panic.
+- **Goal**: Creates a unique interaction where players can use oil to force damage even on "Scary" traps that would normally be avoided.
+

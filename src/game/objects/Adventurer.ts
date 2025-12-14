@@ -406,6 +406,25 @@ export class Adventurer extends Phaser.GameObjects.Container {
             const trap = gridSystem.getCell(nextTile.x, nextTile.y)?.trap;
             const key = `${nextTile.x},${nextTile.y}`;
 
+            // Pre-check: Volatile Ignition (Oiled + Fire Proximity)
+            if (trap && this.hasStatus('oiled')) {
+                const isFireSource = trap.config.element === 'fire' || trap.config.id === 'campfire';
+                if (isFireSource) {
+                    console.log(`Adventurer ${this.id} ignited by proximity to ${trap.config.id}!`);
+
+                    // 1. Visuals & Emote
+                    this.requestEmote('🔥', EmotePriority.HIGH);
+                    this.scene.cameras.main.shake(100, 0.005); // Small shake
+
+                    // 2. Damage & Status Removal
+                    this.takeDamage(30, undefined, undefined); // Instant damage
+                    this.removeStatus('oiled');
+
+                    // 3. Stop Movement (consume frame)
+                    return { reachedEnd: false, enteredNewTile: false };
+                }
+            }
+
             // Condition: Trap exists, is Scary, and is Unknown
             if (trap && trap.config.isScary && !this.knownTraps.has(key)) {
                 // Panic Trigger
