@@ -367,3 +367,6 @@
   - **Override**: This checks happens **BEFORE** Trap Panic. Meaning an Oiled adventurer won't be scared of a fire trap; they will just explode from the fumes before getting close enough to panic.
 - **Goal**: Creates a unique interaction where players can use oil to force damage even on "Scary" traps that would normally be avoided.
 
+### 43. Code Cleanup
+- **Legacy Removal**: Removed `emoteSuccess` and `emoteFail` from the `TrapConfig` and `TrapSystem`. Visual feedback for traps is now handled exclusively by dynamic effects (tweens/particles) rather than static emote bubbles.
+

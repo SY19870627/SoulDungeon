@@ -11,8 +11,6 @@ export interface TrapConfig {
     cooldown?: number;
     maxTriggers?: number; // Added for Durability System
     pushDistance?: number;
-    emoteSuccess?: string;
-    emoteFail?: string;
     isScary?: boolean; // If true, triggers anxiety logic (panic). If false, adventurers walk into it.
 
     // Component System
