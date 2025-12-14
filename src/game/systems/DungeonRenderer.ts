@@ -145,10 +145,20 @@ export class DungeonRenderer {
         }
 
         // Cleanup removed traps
+        // Cleanup removed traps
         for (const [key, sprite] of this.trapSprites) {
             if (!processedKeys.has(key)) {
-                sprite.destroy();
-                this.trapSprites.delete(key);
+                // If sprite is animating (e.g. trigger animation), let it finish before destroying
+                if (this.scene.tweens.isTweening(sprite)) {
+                    this.trapSprites.delete(key); // Stop tracking it
+                    // Force destroy after safe delay
+                    this.scene.time.delayedCall(1000, () => {
+                        if (sprite && sprite.active) sprite.destroy();
+                    });
+                } else {
+                    sprite.destroy();
+                    this.trapSprites.delete(key);
+                }
             }
         }
     }
@@ -215,20 +225,54 @@ export class DungeonRenderer {
                     break;
 
                 case 'bear_trap':
-                    // Snap: ScaleX close + Shake
-                    this.scene.tweens.add({
+                    // 強化版捕獸夾動畫: 蓄力 -> 咬合 -> 晃動
+                    sprite.setTint(0xffaa00); // 閃爍顏色警告
+
+                    const originX = sprite.x;
+
+                    this.scene.tweens.chain({
                         targets: sprite,
-                        scaleX: baseX * 0.5,
-                        duration: 50,
-                        yoyo: true,
-                        repeat: 1
-                    });
-                    this.scene.tweens.add({
-                        targets: sprite,
-                        x: { from: sprite.x - 3, to: sprite.x + 3 },
-                        duration: 30,
-                        yoyo: true,
-                        repeat: 5
+                        tweens: [
+                            // 1. Anticipation (張開)
+                            {
+                                scaleX: baseX * 1.4,
+                                scaleY: baseY * 0.8,
+                                duration: 100,
+                                ease: 'Quad.out'
+                            },
+                            // 2. Snap (咬合)
+                            {
+                                scaleX: baseX * 0.4, // 夾緊
+                                scaleY: baseY * 1.2,
+                                duration: 50,
+                                ease: 'Back.in',
+                                onComplete: () => {
+                                    // 咬合瞬間震動畫面
+                                    this.scene.cameras.main.shake(100, 0.002);
+                                    sprite.setTint(0xff0000); // 變紅代表傷害
+                                }
+                            },
+                            // 3. Struggle/Shake (掙扎晃動)
+                            {
+                                targets: sprite,
+                                x: { from: originX - 3, to: originX + 3 },
+                                duration: 40,
+                                yoyo: true,
+                                repeat: 5, // 持續約 200ms
+                                ease: 'Linear'
+                            },
+                            // 4. Hold & Reset
+                            {
+                                scaleX: baseX,
+                                scaleY: baseY,
+                                x: originX,
+                                duration: 200,
+                                delay: 200,
+                                onComplete: () => {
+                                    sprite.clearTint();
+                                }
+                            }
+                        ]
                     });
                     break;
 

@@ -47,7 +47,12 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 
 3.  **Attack (Lunge)**:
     -   Elastic "Lunge forward & Return" tween.
-    -   Move ~10px towards target, then snap back.
+    -   Implemented Physics-based Tween animations in `DungeonRenderer`:
+        -   **Spike**: Fast Stab & Retract.
+        -   **Bear Trap**: Enhanced "Snap & Shake" (Anticipation -> Snap -> Struggle) with Camera Shake.
+        -   **Spring**: Squash & Stretch (Boing).
+        -   **Magic**: Pulse & Rotate.
+    -   Added 'trap-triggered' event bus to decouple Logic (TrapSystem) from Visuals (Renderer).
 
 4.  **Damage**:
     -   **Flash**: Tint color (0xff0000).
@@ -152,7 +157,7 @@ Rules for the new "Tabletop/Board Game" aesthetic:
         2.  **驚嚇**: 發現陷阱，顯示 😨 表情，迅速縮回。
         3.  **體力懲罰**: 因驚嚇燃燒 5 體力。
         4.  **記憶**: 記住該陷阱位置。
-    *   **無感 (Indifference)**: 對於物理/工具類陷阱（如彈簧、傳送門），冒險者將視為無害並直接踩上，直到陷阱觸發。
+    *   **無感 (Indifference)**: 對於物理/工具類陷阱（如彈簧、傳送門、捕獸夾），冒險者將視為無害並直接踩上，直到陷阱觸發。
     *   **路徑重算**: 重新規劃路徑時，會優先選擇 **「已訪問過的格子」 (Safe Zones)** 作為繞路依據，儘量避開未知區域。
 
 
@@ -257,7 +262,9 @@ Rules for the new "Tabletop/Board Game" aesthetic:
 
 *   **核心運行 (Runtime): Hybrid (Web for Testing / Electron for Steam release)**
     *   用途：將 Web 應用封裝為桌面執行檔 (.exe) 支援 Steam 上架，同時支援透過瀏覽器進行快速測試發布 (Netlify)。
+
     *   特性：原生多視窗支援 (Electron)，跨平台相容性 (Web)。
+    *   **設定**: 預設全螢幕啟動 (`fullscreen: true`)。
 
 *   **建置工具 (Build): Vite**
     *   用途：極速開發伺服器與模組打包。
@@ -283,5 +290,6 @@ Rules for the new "Tabletop/Board Game" aesthetic:
   - The Adventurer immediately recalculates their path.
 - **Pathfinding Logic**:
   - The Pathfinding system must now accept a `dynamicObstacles` argument.
-  - A tile is considered "blocked" if it is EITHER a physical wall OR inside the Adventurer's `memoryBlacklist`.
-- **Result**: Adventurers will walk into a trap once, take damage, remember it, and treat it as a solid wall for the rest of their lifecycle.
+  -   `Spike`, `Fire`: `isScary: true`.
+  -   `Spring`, `Bear Trap`: `isScary: false`.
+- **Outcome**: Adventurers now intelligently avoid obvious traps but fall for hidden/mechanical traps like the Bear Trap.

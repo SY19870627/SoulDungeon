@@ -23,6 +23,7 @@ function createWindow() {
     win = new BrowserWindow({
         width: 1280,
         height: 720,
+        fullscreen: true,
         icon: path.join(VITE_PUBLIC, 'electron-vite.svg'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),

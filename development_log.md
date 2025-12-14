@@ -332,3 +332,15 @@
     3.  **Recover**: Returns to idle.
 -   **Goal**: Better impact and "stabbing" feel.
 
+### 46. Visual Polish & UX Refinements (2025-12-14)
+- **Visuals (Bear Trap)**:
+  - **Animation**: Enhanced Bear Trap with "Snap & Shake" tween sequence (Anticipation -> Snap -> Struggle).
+  - **Feedback**: Added `Camera Shake` on snap and `Red Tint` to indicate damage/struggle.
+  - **Sprite Management**: Updated `DungeonRenderer` to delay sprite destruction for single-use traps until the animation completes.
+- **Balance (Traps)**:
+  - **Bear Trap**: Changed `isScary` to `false`. Adventurers no longer panic when seeing a bear trap; they walk right into it.
+- **UI (Sidebar)**:
+  - **Simplification**: Removed the colored dot indicators from purchase buttons for a cleaner look.
+- **System (Window)**:
+  - **Config**: Set default window mode to `Fullscreen` in Electron `main.ts`.
+

@@ -23,7 +23,7 @@ export const TRAP_DEFINITIONS: Record<string, TrapConfig> = {
         color: 0x553311, // Brown
         cost: 25,
         damage: 15,
-        isScary: true,
+        isScary: false,
         maxTriggers: 1,
         cooldown: 5, // Single use? Or cooldown. Components handle logic.
         components: {

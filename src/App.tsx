@@ -83,13 +83,7 @@ function App() {
                         }}
                     >
                         <span>{trap.name}</span>
-                        <span style={{
-                            width: '12px',
-                            height: '12px',
-                            backgroundColor: '#' + trap.color.toString(16).padStart(6, '0'),
-                            borderRadius: '50%',
-                            display: 'inline-block'
-                        }}></span>
+
                         <span style={{ fontSize: '0.8em', color: '#aaa' }}>{trap.cost}g</span>
                     </button>
                 ))}
